@@ -1,65 +1,119 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+const STAR_COUNT = 50;
+
+interface Star {
+  x: number;
+  y: number;
+  size: number;
+  opacity: number;
+}
 
 export default function Home() {
+  const [stars, setStars] = useState<Star[]>([]);
+  const [token, setToken] = useState<string>('');
+
+  useEffect(() => {
+    const newStars = Array.from({ length: STAR_COUNT }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 1.5 + 0.5,
+      opacity: Math.random() * 0.5 + 0.5,
+    }));
+    setStars(newStars);
+
+    const savedToken = localStorage.getItem('vybrix_token');
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      <div className="fixed inset-0">
+        {stars.map((star, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              opacity: star.opacity,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
+        <div className="text-center mb-12">
+          <h1 className="text-6xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+            VYBRIX
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-cyan-300/80">
+            Connect through emotional frequency
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="max-w-2xl mb-12 text-center">
+          <p className="text-purple-200/70 mb-4">
+            Share your truth anonymously. Receive a message that resonates with your energy.
+          </p>
+          <p className="text-purple-200/60 text-sm">
+            One message per day. No profiles. No borders. Pure connection.
+          </p>
         </div>
-      </main>
+
+        <div className="flex flex-col gap-4 w-full max-w-sm">
+          <Link
+            href="/send"
+            className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-center"
+          >
+            Share Your Message
+          </Link>
+
+          {token ? (
+            <Link
+              href="/receive"
+              className="px-8 py-3 border-2 border-purple-400 text-purple-300 font-semibold rounded-lg hover:bg-purple-400/10 transition-all text-center"
+            >
+              Check Your Response
+            </Link>
+          ) : (
+            <p className="text-center text-purple-300/60 text-sm py-3">
+              Send a message first to receive one
+            </p>
+          )}
+        </div>
+
+        <div className="mt-16 max-w-2xl">
+          <div className="border border-purple-400/20 rounded-lg p-6 bg-purple-400/5 backdrop-blur">
+            <h3 className="text-purple-300 font-semibold mb-3">How It Works</h3>
+            <ul className="space-y-2 text-purple-200/70 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">→</span>
+                <span>Send one message per day</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">→</span>
+                <span>Your emotional frequency is analyzed</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">→</span>
+                <span>Matched with a resonant message (1-10 hours)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">→</span>
+                <span>Receive authentic connection</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
