@@ -16,6 +16,7 @@ const STAR_COUNT = 50;
 export default function SendPage() {
   const router = useRouter();
   const [message, setMessage] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stars, setStars] = useState<Star[]>([]);
@@ -44,6 +45,7 @@ export default function SendPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: message,
+          email: email || undefined,
           token: token || undefined,
         }),
       });
@@ -58,6 +60,7 @@ export default function SendPage() {
       localStorage.setItem('vybrix_token', data.token);
       setSuccess(true);
       setMessage('');
+      setEmail('');
 
       setTimeout(() => {
         router.push('/receive');
@@ -103,9 +106,9 @@ export default function SendPage() {
             <div className="border-2 border-green-500 rounded-lg p-8 bg-green-500/5 backdrop-blur text-center">
               <h2 className="text-2xl font-semibold text-green-400 mb-2">Message Sent!</h2>
               <p className="text-green-300/80 mb-4">
-                Your frequency has been added to the ether. Check back between 1-10 hours for your resonant response.
+                Your frequency has been added to the ether. {email && "We'll email you when your match is ready."}
               </p>
-              <p className="text-green-200/60 text-sm">Redirecting to receive...</p>
+              <p className="text-green-200/60 text-sm">Check back between 1-10 hours for your resonant response.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -117,6 +120,20 @@ export default function SendPage() {
                   className="w-full h-48 px-4 py-3 bg-purple-400/10 border-2 border-purple-400/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 resize-none"
                   disabled={loading}
                 />
+              </div>
+
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email (optional - get notified when matched)"
+                  className="w-full px-4 py-3 bg-purple-400/10 border-2 border-purple-400/30 rounded-lg text-white placeholder-purple-300/40 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+                  disabled={loading}
+                />
+                <p className="text-purple-300/40 text-xs mt-2">
+                  ✨ We'll notify you when your match is ready (1-10 hours)
+                </p>
               </div>
 
               <div className="flex justify-between items-center">

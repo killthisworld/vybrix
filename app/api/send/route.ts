@@ -8,12 +8,12 @@ const pool = new Pool({
 
 interface SendRequest {
   content: string;
+  email?: string;
   token?: string;
 }
 
 async function analyzeMessage(content: string) {
   try {
-    // Simple sentiment analysis without calling OpenAI (for now)
     const sentimentScore = content.length > 50 ? 0.5 : -0.2;
     const embedding = Array(1536).fill(Math.random());
 
@@ -36,7 +36,7 @@ async function analyzeMessage(content: string) {
 export async function POST(request: NextRequest) {
   try {
     const body: SendRequest = await request.json();
-    const { content, token } = body;
+    const { content, email, token } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
 
     const messageResult = await pool.query(
       `INSERT INTO messages 
-       (user_id, content, pool_day, min_deliver_time, max_deliver_time, analysis_done)
-       VALUES ($1, $2, $3, $4, $5, TRUE)
+       (user_id, content, user_email, pool_day, min_deliver_time, max_deliver_time, analysis_done)
+       VALUES ($1, $2, $3, $4, $5, $6, TRUE)
        RETURNING id`,
-      [userId, content, today, minDeliveryTime, maxDeliveryTime]
+      [userId, content, email || null, today, minDeliveryTime, maxDeliveryTime]
     );
 
     const messageId = messageResult.rows[0].id;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import { sendMatchNotification } from '@/lib/email';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
 
     const result = await pool.query(
-      `SELECT m.id, m.user_id, m.content,
+      `SELECT m.id, m.user_id, m.content, m.user_email,
               mv.sentiment_score, mv.emotion_map, mv.intent, mv.energy_scalar
        FROM messages m
        LEFT JOIN message_vibes mv ON m.id = mv.message_id
@@ -121,6 +122,8 @@ export async function GET(request: NextRequest) {
     }
 
     let savedCount = 0;
+    let emailsSent = 0;
+    
     for (const [msgAId, msgBId] of Object.entries(assignments)) {
       try {
         await pool.query(
@@ -130,6 +133,24 @@ export async function GET(request: NextRequest) {
           [msgBId, now, msgAId]
         );
         savedCount++;
+        
+        // Send email notification if user provided email
+        const msgA = messages.find(m => m.id === msgAId);
+        const msgB = messages.find(m => m.id === msgBId);
+        
+        if (msgA?.user_email && msgB) {
+          // Get user token
+          const userResult = await pool.query(
+            'SELECT anon_token FROM users WHERE id = $1',
+            [msgA.user_id]
+          );
+          
+          if (userResult.rows.length > 0) {
+            const token = userResult.rows[0].anon_token;
+            await sendMatchNotification(msgA.user_email, token, msgB.content);
+            emailsSent++;
+          }
+        }
       } catch (e) {
         console.error('Match save error:', e);
       }
@@ -137,8 +158,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Smart matching complete: ${savedCount} matches created`,
+      message: `Smart matching complete: ${savedCount} matches, ${emailsSent} emails sent`,
       pairsCreated: savedCount,
+      emailsSent,
       totalMessages: messages.length,
       matchRate: ((savedCount / messages.length) * 100).toFixed(1) + '%',
     });
