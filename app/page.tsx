@@ -15,6 +15,8 @@ interface Star {
 export default function Home() {
   const [stars, setStars] = useState<Star[]>([]);
   const [token, setToken] = useState<string>('');
+  const [canSend, setCanSend] = useState(true);
+  const [timeUntilNext, setTimeUntilNext] = useState<string>('');
 
   useEffect(() => {
     const newStars = Array.from({ length: STAR_COUNT }, () => ({
@@ -29,7 +31,52 @@ export default function Home() {
     if (savedToken) {
       setToken(savedToken);
     }
+
+    checkIfCanSend();
   }, []);
+
+  useEffect(() => {
+    if (!canSend) {
+      const interval = setInterval(() => {
+        updateTimer();
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [canSend]);
+
+  const checkIfCanSend = async () => {
+    const lastSentDate = localStorage.getItem('vybrix_last_sent_date');
+    const today = new Date().toISOString().split('T')[0];
+
+    if (lastSentDate === today) {
+      setCanSend(false);
+      updateTimer();
+    } else {
+      setCanSend(true);
+    }
+  };
+
+  const updateTimer = () => {
+    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const diff = tomorrow.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    setTimeUntilNext(`${hours}h ${minutes}m ${seconds}s`);
+
+    // Check if we've passed midnight
+    if (diff <= 0) {
+      localStorage.removeItem('vybrix_last_sent_date');
+      setCanSend(true);
+      setTimeUntilNext('');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -69,12 +116,19 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-4 w-full max-w-sm">
-          <Link
-            href="/send"
-            className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-center"
-          >
-            Share Your Message
-          </Link>
+          {canSend ? (
+            <Link
+              href="/send"
+              className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-center"
+            >
+              Share Your Message
+            </Link>
+          ) : (
+            <div className="px-8 py-3 bg-purple-400/10 border-2 border-purple-400/30 text-purple-300 font-semibold rounded-lg text-center cursor-not-allowed">
+              <div>Next message in</div>
+              <div className="text-cyan-400 text-sm mt-1">{timeUntilNext}</div>
+            </div>
+          )}
 
           {token ? (
             <Link

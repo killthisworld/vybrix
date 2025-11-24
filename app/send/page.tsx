@@ -31,7 +31,6 @@ export default function SendPage() {
     }));
     setStars(newStars);
     
-    // Load saved email
     const savedEmail = localStorage.getItem('vybrix_email');
     if (savedEmail) {
       setEmail(savedEmail);
@@ -65,10 +64,13 @@ export default function SendPage() {
 
       localStorage.setItem('vybrix_token', data.token);
       
-      // Save email for next time
       if (email) {
         localStorage.setItem('vybrix_email', email);
       }
+      
+      // Save today's date to prevent multiple sends
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem('vybrix_last_sent_date', today);
       
       setSuccess(true);
       setMessage('');

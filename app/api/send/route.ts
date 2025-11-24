@@ -136,3 +136,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+// Add this at the end of the successful send response:
+// The response already exists, we just need the frontend to save the date

@@ -253,13 +253,10 @@ export default function ReceivePage() {
                 </p>
               </div>
 
-              <div className="flex gap-3">
-                <Link
-                  href="/"
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-center"
-                >
-                  Send Another
-                </Link>
+              <div className="text-center">
+                <p className="text-purple-300/60 text-sm">
+                  Send another message tomorrow to receive a new match
+                </p>
               </div>
             </div>
           )}
