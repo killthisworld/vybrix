@@ -30,6 +30,12 @@ export default function SendPage() {
       opacity: Math.random() * 0.5 + 0.5,
     }));
     setStars(newStars);
+    
+    // Load saved email
+    const savedEmail = localStorage.getItem('vybrix_email');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,9 +64,14 @@ export default function SendPage() {
       }
 
       localStorage.setItem('vybrix_token', data.token);
+      
+      // Save email for next time
+      if (email) {
+        localStorage.setItem('vybrix_email', email);
+      }
+      
       setSuccess(true);
       setMessage('');
-      setEmail('');
 
       setTimeout(() => {
         router.push('/receive');
@@ -132,7 +143,7 @@ export default function SendPage() {
                   disabled={loading}
                 />
                 <p className="text-purple-300/40 text-xs mt-2">
-                  ✨ We'll notify you when your match is ready (1-10 hours)
+                  {email ? '✅ Email saved - we\'ll use this for future notifications' : '✨ Get notified when your match arrives (1-10 hours)'}
                 </p>
               </div>
 
