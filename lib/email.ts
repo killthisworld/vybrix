@@ -8,10 +8,10 @@ export async function sendMatchNotification(
   receiverMessage: string
 ) {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vybrix.onrender.com';
+    const appUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vybrix.app';
     
     await resend.emails.send({
-      from: 'VYBRIX <onboarding@resend.dev>',
+      from: 'VYBRIX <hello@vybrix.app>',
       to: email,
       subject: '✨ Your resonance has arrived',
       html: `
@@ -222,7 +222,7 @@ export async function sendMatchNotification(
 export async function sendResonanceFeedback(email: string) {
   try {
     await resend.emails.send({
-      from: 'VYBRIX <onboarding@resend.dev>',
+      from: 'VYBRIX <hello@vybrix.app>',
       to: email,
       subject: '✨ Someone felt seen by your words',
       html: `
