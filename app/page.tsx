@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Footer from '@/components/Footer';
 
 const STAR_COUNT = 50;
 
@@ -70,7 +71,6 @@ export default function Home() {
 
     setTimeUntilNext(`${hours}h ${minutes}m ${seconds}s`);
 
-    // Check if we've passed midnight
     if (diff <= 0) {
       localStorage.removeItem('vybrix_last_sent_date');
       setCanSend(true);
@@ -79,7 +79,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden pb-16">
       <div className="fixed inset-0">
         {stars.map((star, i) => (
           <div
@@ -168,6 +168,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
