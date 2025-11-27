@@ -12,6 +12,7 @@ export async function sendMatchNotification(
     
     await resend.emails.send({
       from: 'VYBRIX <hello@vybrix.app>',
+      reply_to: 'vybrix.help@gmail.com',  // ← NEW: People can reply here!
       to: email,
       subject: '✨ Your resonance has arrived',
       html: `
@@ -223,6 +224,7 @@ export async function sendResonanceFeedback(email: string) {
   try {
     await resend.emails.send({
       from: 'VYBRIX <hello@vybrix.app>',
+      reply_to: 'vybrix.help@gmail.com',  // ← NEW: People can reply here!
       to: email,
       subject: '✨ Someone felt seen by your words',
       html: `
