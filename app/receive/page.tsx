@@ -146,6 +146,46 @@ export default function ReceivePage() {
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pb-16">
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          25% { transform: translateY(-20px) translateX(10px); }
+          50% { transform: translateY(-10px) translateX(-10px); }
+          75% { transform: translateY(-25px) translateX(5px); }
+        }
+        
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes flame {
+          0%, 100% { transform: scaleY(1); opacity: 0.8; }
+          50% { transform: scaleY(1.3); opacity: 1; }
+        }
+        
+        @keyframes dotPulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        
+        .spaceship-container {
+          animation: float 4s ease-in-out infinite;
+        }
+        
+        .twinkling-star {
+          animation: twinkle 2s ease-in-out infinite;
+        }
+        
+        .rocket-flame {
+          animation: flame 0.3s ease-in-out infinite;
+        }
+        
+        .loading-dot {
+          animation: dotPulse 1.4s ease-in-out infinite;
+        }
+      `}</style>
+
       <div className="fixed inset-0">
         {stars.map((star, i) => (
           <div
@@ -194,16 +234,65 @@ export default function ReceivePage() {
           )}
 
           {status === 'waiting' && (
-            <div className="border-2 border-yellow-500/50 rounded-lg p-8 bg-yellow-500/5 backdrop-blur text-center">
-              <div className="mb-6">
-                <div className="inline-block">
-                  <div className="w-12 h-12 border-3 border-yellow-500/20 border-t-yellow-400 rounded-full animate-spin" />
+            <div className="border-2 border-yellow-500/30 rounded-lg p-12 bg-yellow-500/5 backdrop-blur text-center">
+              {/* Spaceship Animation */}
+              <div className="relative mb-8 flex justify-center">
+                <div className="spaceship-container relative">
+                  {/* Twinkling stars around spaceship */}
+                  <div className="absolute -top-8 -left-12 w-2 h-2 bg-yellow-300 rounded-full twinkling-star" style={{ animationDelay: '0s' }} />
+                  <div className="absolute -top-4 left-20 w-1.5 h-1.5 bg-cyan-300 rounded-full twinkling-star" style={{ animationDelay: '0.5s' }} />
+                  <div className="absolute top-12 -right-16 w-2 h-2 bg-purple-300 rounded-full twinkling-star" style={{ animationDelay: '1s' }} />
+                  <div className="absolute top-20 -left-8 w-1.5 h-1.5 bg-pink-300 rounded-full twinkling-star" style={{ animationDelay: '1.5s' }} />
+                  <div className="absolute -bottom-4 left-16 w-2 h-2 bg-yellow-300 rounded-full twinkling-star" style={{ animationDelay: '0.7s' }} />
+                  
+                  {/* Spaceship SVG */}
+                  <svg width="120" height="120" viewBox="0 0 100 100" className="drop-shadow-2xl">
+                    {/* Main body */}
+                    <ellipse cx="50" cy="45" rx="18" ry="30" fill="url(#shipGradient)" opacity="0.95" />
+                    
+                    {/* Window */}
+                    <ellipse cx="50" cy="35" rx="7" ry="10" fill="url(#windowGradient)" opacity="0.85" />
+                    <ellipse cx="50" cy="33" rx="4" ry="6" fill="#e0f2fe" opacity="0.6" />
+                    
+                    {/* Left wing */}
+                    <path d="M 32 55 L 20 75 L 35 65 Z" fill="url(#wingGradient)" opacity="0.9" />
+                    {/* Right wing */}
+                    <path d="M 68 55 L 80 75 L 65 65 Z" fill="url(#wingGradient)" opacity="0.9" />
+                    
+                    {/* Rocket flame - animated */}
+                    <ellipse cx="50" cy="75" rx="5" ry="12" fill="#fbbf24" opacity="0.9" className="rocket-flame" />
+                    <ellipse cx="50" cy="75" rx="3" ry="8" fill="#fcd34d" opacity="0.8" className="rocket-flame" style={{ animationDelay: '0.15s' }} />
+                    
+                    {/* Gradients */}
+                    <defs>
+                      <linearGradient id="shipGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#a855f7" />
+                        <stop offset="100%" stopColor="#7c3aed" />
+                      </linearGradient>
+                      <linearGradient id="windowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#93c5fd" />
+                        <stop offset="100%" stopColor="#3b82f6" />
+                      </linearGradient>
+                      <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#6d28d9" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
                 </div>
               </div>
-              <h2 className="text-xl font-semibold text-yellow-300 mb-2">
-                Still listening...
-              </h2>
-              <p className="text-yellow-200/60 mb-6">
+
+              {/* Loading text with animated dots */}
+              <div className="flex items-center justify-center space-x-2 mb-6">
+                <span className="text-yellow-300 text-xl font-medium">Finding your match</span>
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full loading-dot" />
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full loading-dot" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full loading-dot" style={{ animationDelay: '0.4s' }} />
+                </div>
+              </div>
+
+              <p className="text-yellow-200/60 mb-4">
                 Your match is on its way. Check back soon.
               </p>
               <p className="text-yellow-200/40 text-sm">
