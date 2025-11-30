@@ -16,7 +16,7 @@ interface Enemy {
   id: number;
   x: number;
   y: number;
-  type: 'monster' | 'asteroid';
+  type: 'spaceship1' | 'spaceship2' | 'spaceship3' | 'asteroid';
   speed: number;
 }
 
@@ -52,6 +52,7 @@ export default function ReceivePage() {
   
   // Game state
   const [ufoY, setUfoY] = useState(50);
+  const targetUfoY = useRef(50);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [bullets, setBullets] = useState<Bullet[]>([]);
   const [explosions, setExplosions] = useState<Explosion[]>([]);
@@ -96,10 +97,25 @@ export default function ReceivePage() {
 
   useEffect(() => {
     if (status === 'received' && receivedMessage) {
+      // Save score to database before showing landing
+      saveScore();
       setShowLanding(true);
       animateLanding();
     }
   }, [status, receivedMessage]);
+
+  const saveScore = async () => {
+    try {
+      const token = localStorage.getItem('vybrix_token');
+      await fetch('/api/save-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, score }),
+      });
+    } catch (err) {
+      console.error('Failed to save score:', err);
+    }
+  };
 
   const animateLanding = () => {
     let progress = 0;
@@ -116,7 +132,14 @@ export default function ReceivePage() {
   const startGame = () => {
     // Spawn enemies periodically
     enemySpawnRef.current = window.setInterval(() => {
-      const type = Math.random() > 0.5 ? 'monster' : 'asteroid';
+      const rand = Math.random();
+      let type: 'spaceship1' | 'spaceship2' | 'spaceship3' | 'asteroid';
+      
+      if (rand < 0.25) type = 'spaceship1';
+      else if (rand < 0.5) type = 'spaceship2';
+      else if (rand < 0.75) type = 'spaceship3';
+      else type = 'asteroid';
+      
       setEnemies(prev => [...prev, {
         id: nextEnemyId.current++,
         x: 100,
@@ -128,6 +151,13 @@ export default function ReceivePage() {
 
     // Main game loop
     const gameLoop = () => {
+      // Smooth UFO movement
+      setUfoY(prev => {
+        const diff = targetUfoY.current - prev;
+        if (Math.abs(diff) < 0.5) return targetUfoY.current;
+        return prev + diff * 0.15;
+      });
+
       // Move enemies
       setEnemies(prev => prev
         .map(enemy => ({ ...enemy, x: enemy.x - enemy.speed }))
@@ -204,6 +234,7 @@ export default function ReceivePage() {
         
         if (hit) {
           setIsHit(true);
+          setScore(0); // Reset score on hit
           setTimeout(() => setIsHit(false), 500);
         }
         
@@ -226,11 +257,11 @@ export default function ReceivePage() {
   };
 
   const moveUp = () => {
-    setUfoY(prev => Math.max(10, prev - 5));
+    targetUfoY.current = Math.max(10, targetUfoY.current - 5);
   };
 
   const moveDown = () => {
-    setUfoY(prev => Math.min(90, prev + 5));
+    targetUfoY.current = Math.min(90, targetUfoY.current + 5);
   };
 
   const shoot = () => {
@@ -431,9 +462,14 @@ export default function ReceivePage() {
         
         @keyframes flicker {
           0%, 100% { opacity: 1; }
-          25% { opacity: 0.3; }
+          25% { opacity: 0.2; }
           50% { opacity: 1; }
-          75% { opacity: 0.3; }
+          75% { opacity: 0.2; }
+        }
+        
+        @keyframes dotPulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
         }
         
         .moving-star {
@@ -442,6 +478,10 @@ export default function ReceivePage() {
         
         .flickering {
           animation: flicker 0.5s;
+        }
+        
+        .loading-dot {
+          animation: dotPulse 1.4s ease-in-out infinite;
         }
       `}</style>
 
@@ -472,7 +512,6 @@ export default function ReceivePage() {
               left: '15%',
               top: `${ufoY}%`,
               transform: 'translate(-50%, -50%)',
-              transition: 'top 0.1s ease-out'
             }}
           >
             <svg width="100" height="60" viewBox="0 0 140 80">
@@ -522,7 +561,7 @@ export default function ReceivePage() {
             />
           ))}
 
-          {/* Enemies */}
+          {/* Enemies - Changed to spaceships */}
           {enemies.map(enemy => (
             <div
               key={enemy.id}
@@ -533,14 +572,32 @@ export default function ReceivePage() {
                 transform: 'translate(-50%, -50%)'
               }}
             >
-              {enemy.type === 'monster' ? (
+              {enemy.type === 'spaceship1' ? (
                 <svg width="50" height="50" viewBox="0 0 50 50">
-                  <circle cx="25" cy="25" r="20" fill="#8b5cf6" />
-                  <circle cx="18" cy="20" r="4" fill="#000" />
-                  <circle cx="32" cy="20" r="4" fill="#000" />
-                  <path d="M 15 32 Q 25 38, 35 32" stroke="#000" strokeWidth="2" fill="none" />
-                  <path d="M 10 15 L 5 10" stroke="#8b5cf6" strokeWidth="3" />
-                  <path d="M 40 15 L 45 10" stroke="#8b5cf6" strokeWidth="3" />
+                  <ellipse cx="25" cy="25" rx="20" ry="10" fill="#ef4444" />
+                  <ellipse cx="25" cy="23" rx="18" ry="8" fill="#f87171" />
+                  <circle cx="25" cy="25" r="8" fill="#dc2626" opacity="0.7" />
+                  <circle cx="25" cy="25" r="4" fill="#fbbf24" opacity="0.8">
+                    <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
+                  </circle>
+                </svg>
+              ) : enemy.type === 'spaceship2' ? (
+                <svg width="50" height="50" viewBox="0 0 50 50">
+                  <ellipse cx="25" cy="25" rx="20" ry="10" fill="#8b5cf6" />
+                  <ellipse cx="25" cy="23" rx="18" ry="8" fill="#a78bfa" />
+                  <circle cx="25" cy="25" r="8" fill="#7c3aed" opacity="0.7" />
+                  <circle cx="25" cy="25" r="4" fill="#22d3ee" opacity="0.8">
+                    <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" />
+                  </circle>
+                </svg>
+              ) : enemy.type === 'spaceship3' ? (
+                <svg width="50" height="50" viewBox="0 0 50 50">
+                  <ellipse cx="25" cy="25" rx="20" ry="10" fill="#10b981" />
+                  <ellipse cx="25" cy="23" rx="18" ry="8" fill="#34d399" />
+                  <circle cx="25" cy="25" r="8" fill="#059669" opacity="0.7" />
+                  <circle cx="25" cy="25" r="4" fill="#fbbf24" opacity="0.8">
+                    <animate attributeName="opacity" values="0.5;1;0.5" dur="0.9s" repeatCount="indefinite" />
+                  </circle>
                 </svg>
               ) : (
                 <svg width="50" height="50" viewBox="0 0 50 50">
@@ -572,16 +629,23 @@ export default function ReceivePage() {
             </div>
           ))}
 
-          {/* Score */}
-          <div className="fixed top-8 right-8 z-30 text-2xl font-bold text-cyan-400">
+          {/* Score - smaller font */}
+          <div className="fixed top-6 right-6 z-30 text-lg font-bold text-cyan-400">
             Score: {score}
           </div>
 
-          {/* Finding your match text */}
-          <div className="fixed top-8 left-0 right-0 flex items-center justify-center z-30">
-            <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
-              Finding your match...
-            </span>
+          {/* Finding your match text - moved down with loading animation */}
+          <div className="fixed top-24 left-0 right-0 flex items-center justify-center z-30">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+                Finding your match
+              </span>
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-purple-400 rounded-full loading-dot" />
+                <div className="w-2 h-2 bg-cyan-400 rounded-full loading-dot" style={{ animationDelay: '0.2s' }} />
+                <div className="w-2 h-2 bg-pink-400 rounded-full loading-dot" style={{ animationDelay: '0.4s' }} />
+              </div>
+            </div>
           </div>
 
           {/* Controls */}
