@@ -34,7 +34,7 @@ interface Explosion {
 }
 
 const STAR_COUNT = 100;
-const BOTTOM_BOUNDARY = 82; // UFO can't go lower than this
+const BOTTOM_BOUNDARY = 82;
 
 interface ReceiveResponse {
   status: string;
@@ -61,10 +61,6 @@ export default function ReceivePage() {
   const [score, setScore] = useState(0);
   const [showLanding, setShowLanding] = useState(false);
   const [landingProgress, setLandingProgress] = useState(0);
-  
-  // Control state for holding buttons
-  const [movingUp, setMovingUp] = useState(false);
-  const [movingDown, setMovingDown] = useState(false);
   
   const gameLoopRef = useRef<number | null>(null);
   const enemySpawnRef = useRef<number | null>(null);
@@ -153,14 +149,6 @@ export default function ReceivePage() {
     }, 2000);
 
     const gameLoop = () => {
-      // Continuous UFO movement when buttons held
-      setUfoY(prev => {
-        let newY = prev;
-        if (movingUp) newY -= 0.8;
-        if (movingDown) newY += 0.8;
-        return Math.max(10, Math.min(BOTTOM_BOUNDARY, newY));
-      });
-
       setEnemies(prev => prev
         .map(enemy => ({ ...enemy, x: enemy.x - enemy.speed }))
         .filter(enemy => enemy.x > -10)
@@ -253,6 +241,14 @@ export default function ReceivePage() {
     if (enemySpawnRef.current) {
       clearInterval(enemySpawnRef.current);
     }
+  };
+
+  const moveUp = () => {
+    setUfoY(prev => Math.max(10, prev - 5));
+  };
+
+  const moveDown = () => {
+    setUfoY(prev => Math.min(BOTTOM_BOUNDARY, prev + 5));
   };
 
   const shoot = () => {
@@ -497,6 +493,7 @@ export default function ReceivePage() {
               left: '15%',
               top: `${ufoY}%`,
               transform: 'translate(-50%, -50%)',
+              transition: 'top 0.15s ease-out'
             }}
           >
             <svg width="100" height="60" viewBox="0 0 140 80">
@@ -556,7 +553,6 @@ export default function ReceivePage() {
             >
               {enemy.type === 'spaceship1' ? (
                 <svg width="60" height="40" viewBox="0 0 60 40">
-                  {/* Red spaceship - sleek design */}
                   <path d="M 10 20 L 50 10 L 55 20 L 50 30 L 10 20 Z" fill="#dc2626" />
                   <path d="M 10 20 L 50 12 L 54 20 L 50 28 L 10 20 Z" fill="#ef4444" />
                   <ellipse cx="15" cy="20" rx="8" ry="6" fill="#7c2d12" />
@@ -568,7 +564,6 @@ export default function ReceivePage() {
                 </svg>
               ) : enemy.type === 'spaceship2' ? (
                 <svg width="60" height="40" viewBox="0 0 60 40">
-                  {/* Purple spaceship - angular design */}
                   <path d="M 10 20 L 48 12 L 55 20 L 48 28 L 10 20 Z" fill="#7c3aed" />
                   <path d="M 10 20 L 48 14 L 53 20 L 48 26 L 10 20 Z" fill="#8b5cf6" />
                   <rect x="12" y="17" width="6" height="6" fill="#581c87" />
@@ -580,7 +575,6 @@ export default function ReceivePage() {
                 </svg>
               ) : enemy.type === 'spaceship3' ? (
                 <svg width="60" height="40" viewBox="0 0 60 40">
-                  {/* Green spaceship - curved design */}
                   <ellipse cx="30" cy="20" rx="25" ry="10" fill="#047857" />
                   <ellipse cx="30" cy="19" rx="24" ry="9" fill="#059669" />
                   <ellipse cx="32" cy="19" rx="22" ry="8" fill="#10b981" />
@@ -622,7 +616,6 @@ export default function ReceivePage() {
                   <circle cx="30" cy="30" r="15" fill="#ffa500" />
                   <circle cx="30" cy="30" r="10" fill="#ffff00" />
                   <circle cx="30" cy="30" r="5" fill="#ffffff" />
-                  {/* Flame particles */}
                   <circle cx="20" cy="20" r="4" fill="#ff4500" opacity="0.7" />
                   <circle cx="40" cy="25" r="3" fill="#ffa500" opacity="0.8" />
                   <circle cx="25" cy="40" r="3" fill="#ff6347" opacity="0.6" />
@@ -649,24 +642,15 @@ export default function ReceivePage() {
             </div>
           </div>
 
-          {/* Smaller controls */}
           <div className="fixed bottom-8 left-8 z-30 flex flex-col gap-2">
             <button
-              onMouseDown={() => setMovingUp(true)}
-              onMouseUp={() => setMovingUp(false)}
-              onMouseLeave={() => setMovingUp(false)}
-              onTouchStart={() => setMovingUp(true)}
-              onTouchEnd={() => setMovingUp(false)}
+              onClick={moveUp}
               className="w-12 h-12 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all"
             >
               ▲
             </button>
             <button
-              onMouseDown={() => setMovingDown(true)}
-              onMouseUp={() => setMovingDown(false)}
-              onMouseLeave={() => setMovingDown(false)}
-              onTouchStart={() => setMovingDown(true)}
-              onTouchEnd={() => setMovingDown(false)}
+              onClick={moveDown}
               className="w-12 h-12 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all"
             >
               ▼
