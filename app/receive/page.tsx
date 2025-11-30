@@ -36,7 +36,7 @@ export default function ReceivePage() {
       y: Math.random() * 100,
       size: Math.random() * 2 + 0.5,
       opacity: Math.random() * 0.7 + 0.3,
-      speed: Math.random() * 3 + 1,
+      speed: Math.random() * 3 + 2,
     }));
     setStars(newStars);
   }, []);
@@ -163,13 +163,13 @@ export default function ReceivePage() {
             transform: translateX(0) translateY(0);
           }
           25% {
-            transform: translateX(0) translateY(-8px);
+            transform: translateX(0) translateY(-6px);
           }
           50% {
             transform: translateX(0) translateY(0);
           }
           75% {
-            transform: translateX(0) translateY(8px);
+            transform: translateX(0) translateY(6px);
           }
           100% {
             transform: translateX(0) translateY(0);
@@ -183,10 +183,10 @@ export default function ReceivePage() {
         
         @keyframes glow {
           0%, 100% {
-            filter: drop-shadow(0 0 15px rgba(100, 116, 139, 0.6));
+            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
           }
           50% {
-            filter: drop-shadow(0 0 25px rgba(148, 163, 184, 0.8));
+            filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.6));
           }
         }
         
@@ -195,7 +195,7 @@ export default function ReceivePage() {
         }
         
         .ufo-container {
-          animation: flyUFO 3s ease-in-out infinite, glow 2s ease-in-out infinite;
+          animation: flyUFO 2.5s ease-in-out infinite, glow 2s ease-in-out infinite;
         }
         
         .loading-dot {
@@ -205,7 +205,7 @@ export default function ReceivePage() {
 
       {status === 'waiting' && (
         <>
-          {/* Moving stars background - full screen */}
+          {/* Moving stars background - full screen with medium speed */}
           <div className="fixed inset-0 overflow-hidden">
             {stars.map((star, i) => (
               <div
@@ -217,90 +217,68 @@ export default function ReceivePage() {
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
-                  animationDuration: `${star.speed * 10}s`,
+                  animationDuration: `${star.speed * 2}s`,
                 }}
               />
             ))}
           </div>
 
-          {/* UFO in center of screen */}
+          {/* UFO in center of screen - emoji style */}
           <div className="fixed inset-0 flex items-center justify-center z-20">
             <div className="ufo-container">
-              <svg width="240" height="120" viewBox="0 0 240 120" className="drop-shadow-2xl">
-                {/* Main saucer body - realistic metallic look */}
+              <svg width="140" height="80" viewBox="0 0 140 80" className="drop-shadow-2xl">
                 <defs>
-                  <radialGradient id="metalGradient" cx="50%" cy="40%">
-                    <stop offset="0%" stopColor="#e2e8f0" />
-                    <stop offset="40%" stopColor="#94a3b8" />
-                    <stop offset="70%" stopColor="#64748b" />
-                    <stop offset="100%" stopColor="#475569" />
-                  </radialGradient>
-                  
-                  <radialGradient id="domeGradient" cx="50%" cy="30%">
-                    <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.8" />
-                    <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.6" />
-                    <stop offset="100%" stopColor="#0369a1" stopOpacity="0.9" />
-                  </radialGradient>
-                  
-                  <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#cbd5e1" />
-                    <stop offset="50%" stopColor="#64748b" />
-                    <stop offset="100%" stopColor="#334155" />
+                  {/* Gray metallic gradient for saucer */}
+                  <linearGradient id="saucerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#9ca3af" />
+                    <stop offset="50%" stopColor="#6b7280" />
+                    <stop offset="100%" stopColor="#4b5563" />
                   </linearGradient>
-
-                  <filter id="metalShine">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-                    <feOffset dx="0" dy="1" result="offsetblur"/>
-                    <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.3"/>
-                    </feComponentTransfer>
-                    <feMerge>
-                      <feMergeNode/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
+                  
+                  {/* Glass dome gradient */}
+                  <radialGradient id="domeGrad" cx="50%" cy="40%">
+                    <stop offset="0%" stopColor="#bfdbfe" stopOpacity="0.9" />
+                    <stop offset="60%" stopColor="#60a5fa" stopOpacity="0.7" />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.85" />
+                  </radialGradient>
                 </defs>
                 
-                {/* Bottom shadow/rim */}
-                <ellipse cx="120" cy="65" rx="85" ry="10" fill="#1e293b" opacity="0.4" />
+                {/* Main saucer body */}
+                <ellipse cx="70" cy="50" rx="60" ry="18" fill="url(#saucerGrad)" />
                 
-                {/* Main saucer disc */}
-                <ellipse cx="120" cy="60" rx="90" ry="22" fill="url(#metalGradient)" filter="url(#metalShine)" />
+                {/* Top highlight on saucer */}
+                <ellipse cx="70" cy="47" rx="58" ry="15" fill="#d1d5db" opacity="0.3" />
                 
-                {/* Metallic rim detail */}
-                <ellipse cx="120" cy="58" rx="90" ry="20" fill="none" stroke="url(#edgeGradient)" strokeWidth="2" opacity="0.6" />
+                {/* Glass dome on top */}
+                <ellipse cx="70" cy="38" rx="28" ry="20" fill="url(#domeGrad)" />
                 
-                {/* Center band */}
-                <ellipse cx="120" cy="60" rx="88" ry="8" fill="#475569" opacity="0.5" />
+                {/* Dome reflection/shine */}
+                <ellipse cx="70" cy="35" rx="20" ry="14" fill="#e0f2fe" opacity="0.5" />
                 
-                {/* Top dome (cockpit) */}
-                <ellipse cx="120" cy="45" rx="35" ry="22" fill="url(#domeGradient)" />
+                {/* Bottom rim detail */}
+                <ellipse cx="70" cy="53" rx="60" ry="8" fill="#374151" opacity="0.5" />
                 
-                {/* Dome highlight */}
-                <ellipse cx="120" cy="42" rx="25" ry="15" fill="#f0f9ff" opacity="0.3" />
-                
-                {/* Small port windows */}
-                <ellipse cx="80" cy="58" rx="5" ry="3" fill="#fbbf24" opacity="0.9">
-                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite" />
-                </ellipse>
-                <ellipse cx="100" cy="60" rx="5" ry="3" fill="#22d3ee" opacity="0.9">
-                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite" />
-                </ellipse>
-                <ellipse cx="140" cy="60" rx="5" ry="3" fill="#22d3ee" opacity="0.9">
-                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.3s" repeatCount="indefinite" />
-                </ellipse>
-                <ellipse cx="160" cy="58" rx="5" ry="3" fill="#fbbf24" opacity="0.9">
-                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.4s" repeatCount="indefinite" />
-                </ellipse>
-                
-                {/* Panel lines for detail */}
-                <path d="M 120 38 Q 100 55, 120 62" stroke="#334155" strokeWidth="1" fill="none" opacity="0.3" />
-                <path d="M 120 38 Q 140 55, 120 62" stroke="#334155" strokeWidth="1" fill="none" opacity="0.3" />
+                {/* Colored lights on the edge - classic emoji style */}
+                <circle cx="30" cy="52" r="4" fill="#ef4444">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="50" cy="54" r="4" fill="#eab308">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="70" cy="55" r="4" fill="#22c55e">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="0.9s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="90" cy="54" r="4" fill="#3b82f6">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1.1s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="110" cy="52" r="4" fill="#a855f7">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1.3s" repeatCount="indefinite" />
+                </circle>
               </svg>
             </div>
           </div>
 
-          {/* Finding your match text - moved down */}
+          {/* Finding your match text */}
           <div className="fixed top-32 left-0 right-0 flex items-center justify-center z-30">
             <div className="flex items-center space-x-3">
               <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
