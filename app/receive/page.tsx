@@ -30,9 +30,11 @@ interface Explosion {
   id: number;
   x: number;
   y: number;
+  frame: number;
 }
 
 const STAR_COUNT = 100;
+const BOTTOM_BOUNDARY = 82; // UFO can't go lower than this
 
 interface ReceiveResponse {
   status: string;
@@ -52,7 +54,6 @@ export default function ReceivePage() {
   
   // Game state
   const [ufoY, setUfoY] = useState(50);
-  const targetUfoY = useRef(50);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [bullets, setBullets] = useState<Bullet[]>([]);
   const [explosions, setExplosions] = useState<Explosion[]>([]);
@@ -60,6 +61,10 @@ export default function ReceivePage() {
   const [score, setScore] = useState(0);
   const [showLanding, setShowLanding] = useState(false);
   const [landingProgress, setLandingProgress] = useState(0);
+  
+  // Control state for holding buttons
+  const [movingUp, setMovingUp] = useState(false);
+  const [movingDown, setMovingDown] = useState(false);
   
   const gameLoopRef = useRef<number | null>(null);
   const enemySpawnRef = useRef<number | null>(null);
@@ -97,7 +102,6 @@ export default function ReceivePage() {
 
   useEffect(() => {
     if (status === 'received' && receivedMessage) {
-      // Save score to database before showing landing
       saveScore();
       setShowLanding(true);
       animateLanding();
@@ -130,7 +134,6 @@ export default function ReceivePage() {
   };
 
   const startGame = () => {
-    // Spawn enemies periodically
     enemySpawnRef.current = window.setInterval(() => {
       const rand = Math.random();
       let type: 'spaceship1' | 'spaceship2' | 'spaceship3' | 'asteroid';
@@ -143,34 +146,37 @@ export default function ReceivePage() {
       setEnemies(prev => [...prev, {
         id: nextEnemyId.current++,
         x: 100,
-        y: Math.random() * 80 + 10,
+        y: Math.random() * (BOTTOM_BOUNDARY - 15) + 10,
         type,
         speed: Math.random() * 0.5 + 0.3
       }]);
     }, 2000);
 
-    // Main game loop
     const gameLoop = () => {
-      // Smooth UFO movement
+      // Continuous UFO movement when buttons held
       setUfoY(prev => {
-        const diff = targetUfoY.current - prev;
-        if (Math.abs(diff) < 0.5) return targetUfoY.current;
-        return prev + diff * 0.15;
+        let newY = prev;
+        if (movingUp) newY -= 0.8;
+        if (movingDown) newY += 0.8;
+        return Math.max(10, Math.min(BOTTOM_BOUNDARY, newY));
       });
 
-      // Move enemies
       setEnemies(prev => prev
         .map(enemy => ({ ...enemy, x: enemy.x - enemy.speed }))
         .filter(enemy => enemy.x > -10)
       );
 
-      // Move bullets
       setBullets(prev => prev
         .map(bullet => ({ ...bullet, x: bullet.x + 1 }))
         .filter(bullet => bullet.x < 105)
       );
 
-      // Check collisions
+      // Animate explosions
+      setExplosions(prev => prev
+        .map(exp => ({ ...exp, frame: exp.frame + 1 }))
+        .filter(exp => exp.frame < 15)
+      );
+
       setBullets(prevBullets => {
         let newBullets = [...prevBullets];
         
@@ -184,19 +190,15 @@ export default function ReceivePage() {
               );
               
               if (distance < 5) {
-                // Hit!
                 newBullets = newBullets.filter(b => b.id !== bullet.id);
                 newEnemies = newEnemies.filter(e => e.id !== enemy.id);
                 setExplosions(prev => [...prev, {
                   id: nextExplosionId.current++,
                   x: enemy.x,
-                  y: enemy.y
+                  y: enemy.y,
+                  frame: 0
                 }]);
                 setScore(prev => prev + 10);
-                
-                setTimeout(() => {
-                  setExplosions(prev => prev.filter(exp => exp.id !== nextExplosionId.current - 1));
-                }, 500);
               }
             });
           });
@@ -207,7 +209,6 @@ export default function ReceivePage() {
         return newBullets;
       });
 
-      // Check UFO collisions
       setEnemies(prevEnemies => {
         const ufoX = 15;
         let hit = false;
@@ -222,11 +223,9 @@ export default function ReceivePage() {
             setExplosions(prev => [...prev, {
               id: nextExplosionId.current++,
               x: enemy.x,
-              y: enemy.y
+              y: enemy.y,
+              frame: 0
             }]);
-            setTimeout(() => {
-              setExplosions(prev => prev.slice(1));
-            }, 500);
             return false;
           }
           return true;
@@ -234,7 +233,7 @@ export default function ReceivePage() {
         
         if (hit) {
           setIsHit(true);
-          setScore(0); // Reset score on hit
+          setScore(0);
           setTimeout(() => setIsHit(false), 500);
         }
         
@@ -254,14 +253,6 @@ export default function ReceivePage() {
     if (enemySpawnRef.current) {
       clearInterval(enemySpawnRef.current);
     }
-  };
-
-  const moveUp = () => {
-    targetUfoY.current = Math.max(10, targetUfoY.current - 5);
-  };
-
-  const moveDown = () => {
-    targetUfoY.current = Math.min(90, targetUfoY.current + 5);
   };
 
   const shoot = () => {
@@ -352,7 +343,6 @@ export default function ReceivePage() {
     );
   }
 
-  // Landing animation screen
   if (showLanding) {
     const ufoLandingY = landingProgress;
     const planetY = 70 + (30 - landingProgress * 0.3);
@@ -376,7 +366,6 @@ export default function ReceivePage() {
         </div>
 
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          {/* Planet */}
           <div 
             className="absolute"
             style={{
@@ -399,7 +388,6 @@ export default function ReceivePage() {
             </svg>
           </div>
 
-          {/* Landing UFO */}
           <div 
             className="absolute"
             style={{
@@ -426,7 +414,6 @@ export default function ReceivePage() {
               <ellipse cx="70" cy="47" rx="58" ry="15" fill="#d1d5db" opacity="0.3" />
               <ellipse cx="70" cy="38" rx="28" ry="20" fill="url(#domeGrad)" />
               
-              {/* Alien inside */}
               <ellipse cx="70" cy="38" rx="8" ry="10" fill="#22c55e" />
               <ellipse cx="67" cy="36" rx="2.5" ry="3" fill="#000" />
               <ellipse cx="73" cy="36" rx="2.5" ry="3" fill="#000" />
@@ -487,7 +474,6 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && (
         <>
-          {/* Moving stars */}
           <div className="fixed inset-0 overflow-hidden">
             {stars.map((star, i) => (
               <div
@@ -505,7 +491,6 @@ export default function ReceivePage() {
             ))}
           </div>
 
-          {/* UFO */}
           <div 
             className={`absolute z-20 ${isHit ? 'flickering' : ''}`}
             style={{
@@ -532,7 +517,6 @@ export default function ReceivePage() {
               <ellipse cx="70" cy="47" rx="58" ry="15" fill="#d1d5db" opacity="0.3" />
               <ellipse cx="70" cy="38" rx="28" ry="20" fill="url(#domeGrad)" />
               
-              {/* Alien pilot */}
               <ellipse cx="70" cy="38" rx="8" ry="10" fill="#22c55e" />
               <ellipse cx="67" cy="36" rx="2.5" ry="3" fill="#000" />
               <ellipse cx="73" cy="36" rx="2.5" ry="3" fill="#000" />
@@ -548,7 +532,6 @@ export default function ReceivePage() {
             </svg>
           </div>
 
-          {/* Bullets */}
           {bullets.map(bullet => (
             <div
               key={bullet.id}
@@ -561,7 +544,6 @@ export default function ReceivePage() {
             />
           ))}
 
-          {/* Enemies - Changed to spaceships */}
           {enemies.map(enemy => (
             <div
               key={enemy.id}
@@ -573,31 +555,41 @@ export default function ReceivePage() {
               }}
             >
               {enemy.type === 'spaceship1' ? (
-                <svg width="50" height="50" viewBox="0 0 50 50">
-                  <ellipse cx="25" cy="25" rx="20" ry="10" fill="#ef4444" />
-                  <ellipse cx="25" cy="23" rx="18" ry="8" fill="#f87171" />
-                  <circle cx="25" cy="25" r="8" fill="#dc2626" opacity="0.7" />
-                  <circle cx="25" cy="25" r="4" fill="#fbbf24" opacity="0.8">
+                <svg width="60" height="40" viewBox="0 0 60 40">
+                  {/* Red spaceship - sleek design */}
+                  <path d="M 10 20 L 50 10 L 55 20 L 50 30 L 10 20 Z" fill="#dc2626" />
+                  <path d="M 10 20 L 50 12 L 54 20 L 50 28 L 10 20 Z" fill="#ef4444" />
+                  <ellipse cx="15" cy="20" rx="8" ry="6" fill="#7c2d12" />
+                  <circle cx="45" cy="20" r="3" fill="#fbbf24">
                     <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
                   </circle>
+                  <path d="M 50 15 L 52 10 L 54 15" fill="#dc2626" />
+                  <path d="M 50 25 L 52 30 L 54 25" fill="#dc2626" />
                 </svg>
               ) : enemy.type === 'spaceship2' ? (
-                <svg width="50" height="50" viewBox="0 0 50 50">
-                  <ellipse cx="25" cy="25" rx="20" ry="10" fill="#8b5cf6" />
-                  <ellipse cx="25" cy="23" rx="18" ry="8" fill="#a78bfa" />
-                  <circle cx="25" cy="25" r="8" fill="#7c3aed" opacity="0.7" />
-                  <circle cx="25" cy="25" r="4" fill="#22d3ee" opacity="0.8">
+                <svg width="60" height="40" viewBox="0 0 60 40">
+                  {/* Purple spaceship - angular design */}
+                  <path d="M 10 20 L 48 12 L 55 20 L 48 28 L 10 20 Z" fill="#7c3aed" />
+                  <path d="M 10 20 L 48 14 L 53 20 L 48 26 L 10 20 Z" fill="#8b5cf6" />
+                  <rect x="12" y="17" width="6" height="6" fill="#581c87" />
+                  <circle cx="43" cy="20" r="3" fill="#22d3ee">
                     <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" />
                   </circle>
+                  <path d="M 48 12 L 50 8 L 52 12" fill="#7c3aed" />
+                  <path d="M 48 28 L 50 32 L 52 28" fill="#7c3aed" />
                 </svg>
               ) : enemy.type === 'spaceship3' ? (
-                <svg width="50" height="50" viewBox="0 0 50 50">
-                  <ellipse cx="25" cy="25" rx="20" ry="10" fill="#10b981" />
-                  <ellipse cx="25" cy="23" rx="18" ry="8" fill="#34d399" />
-                  <circle cx="25" cy="25" r="8" fill="#059669" opacity="0.7" />
-                  <circle cx="25" cy="25" r="4" fill="#fbbf24" opacity="0.8">
+                <svg width="60" height="40" viewBox="0 0 60 40">
+                  {/* Green spaceship - curved design */}
+                  <ellipse cx="30" cy="20" rx="25" ry="10" fill="#047857" />
+                  <ellipse cx="30" cy="19" rx="24" ry="9" fill="#059669" />
+                  <ellipse cx="32" cy="19" rx="22" ry="8" fill="#10b981" />
+                  <ellipse cx="20" cy="20" rx="8" ry="5" fill="#065f46" />
+                  <circle cx="40" cy="20" r="3" fill="#fbbf24">
                     <animate attributeName="opacity" values="0.5;1;0.5" dur="0.9s" repeatCount="indefinite" />
                   </circle>
+                  <ellipse cx="28" cy="14" rx="3" ry="2" fill="#34d399" />
+                  <ellipse cx="28" cy="26" rx="3" ry="2" fill="#34d399" />
                 </svg>
               ) : (
                 <svg width="50" height="50" viewBox="0 0 50 50">
@@ -610,31 +602,40 @@ export default function ReceivePage() {
             </div>
           ))}
 
-          {/* Explosions */}
-          {explosions.map(explosion => (
-            <div
-              key={explosion.id}
-              className="absolute z-25"
-              style={{
-                left: `${explosion.x}%`,
-                top: `${explosion.y}%`,
-                transform: 'translate(-50%, -50%)'
-              }}
-            >
-              <svg width="60" height="60" viewBox="0 0 60 60">
-                <circle cx="30" cy="30" r="25" fill="#f97316" opacity="0.8" />
-                <circle cx="30" cy="30" r="18" fill="#fbbf24" opacity="0.9" />
-                <circle cx="30" cy="30" r="10" fill="#fef08a" />
-              </svg>
-            </div>
-          ))}
+          {explosions.map(explosion => {
+            const scale = 1 + (explosion.frame * 0.1);
+            const opacity = 1 - (explosion.frame / 15);
+            return (
+              <div
+                key={explosion.id}
+                className="absolute z-25"
+                style={{
+                  left: `${explosion.x}%`,
+                  top: `${explosion.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  opacity: opacity
+                }}
+              >
+                <svg width={60 * scale} height={60 * scale} viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="25" fill="#ff4500" opacity="0.8" />
+                  <circle cx="30" cy="30" r="20" fill="#ff6347" opacity="0.9" />
+                  <circle cx="30" cy="30" r="15" fill="#ffa500" />
+                  <circle cx="30" cy="30" r="10" fill="#ffff00" />
+                  <circle cx="30" cy="30" r="5" fill="#ffffff" />
+                  {/* Flame particles */}
+                  <circle cx="20" cy="20" r="4" fill="#ff4500" opacity="0.7" />
+                  <circle cx="40" cy="25" r="3" fill="#ffa500" opacity="0.8" />
+                  <circle cx="25" cy="40" r="3" fill="#ff6347" opacity="0.6" />
+                  <circle cx="35" cy="38" r="4" fill="#ff4500" opacity="0.7" />
+                </svg>
+              </div>
+            );
+          })}
 
-          {/* Score - smaller font */}
           <div className="fixed top-6 right-6 z-30 text-lg font-bold text-cyan-400">
             Score: {score}
           </div>
 
-          {/* Finding your match text - moved down with loading animation */}
           <div className="fixed top-24 left-0 right-0 flex items-center justify-center z-30">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
@@ -648,17 +649,25 @@ export default function ReceivePage() {
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="fixed bottom-8 left-8 z-30 flex flex-col gap-3">
+          {/* Smaller controls */}
+          <div className="fixed bottom-8 left-8 z-30 flex flex-col gap-2">
             <button
-              onClick={moveUp}
-              className="w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all"
+              onMouseDown={() => setMovingUp(true)}
+              onMouseUp={() => setMovingUp(false)}
+              onMouseLeave={() => setMovingUp(false)}
+              onTouchStart={() => setMovingUp(true)}
+              onTouchEnd={() => setMovingUp(false)}
+              className="w-12 h-12 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all"
             >
               ▲
             </button>
             <button
-              onClick={moveDown}
-              className="w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all"
+              onMouseDown={() => setMovingDown(true)}
+              onMouseUp={() => setMovingDown(false)}
+              onMouseLeave={() => setMovingDown(false)}
+              onTouchStart={() => setMovingDown(true)}
+              onTouchEnd={() => setMovingDown(false)}
+              className="w-12 h-12 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all"
             >
               ▼
             </button>
@@ -673,7 +682,6 @@ export default function ReceivePage() {
             </button>
           </div>
 
-          {/* Back to home */}
           <div className="fixed bottom-8 left-0 right-0 text-center z-30">
             <Link href="/" className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors">
               ← Back to home
