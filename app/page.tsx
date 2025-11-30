@@ -96,8 +96,8 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
-        <div className="text-center mb-12">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
+        <div className="text-center mb-8">
           <h1 className="text-6xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
             VYBRIX
           </h1>
@@ -106,16 +106,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="max-w-2xl mb-12 text-center">
-          <p className="text-purple-200/70 mb-4">
-            Share your truth anonymously. Receive a message that resonates with your energy.
-          </p>
-          <p className="text-purple-200/60 text-sm">
-            One message per day. No profiles. No borders. Pure connection.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-4 w-full max-w-sm">
+        <div className="flex flex-col gap-3 w-full max-w-sm mb-8">
           {canSend ? (
             <Link
               href="/send"
@@ -142,9 +133,16 @@ export default function Home() {
               Send a message first to receive one
             </p>
           )}
+
+          <Link
+            href="/leaderboard"
+            className="px-8 py-3 border-2 border-cyan-400 text-cyan-300 font-semibold rounded-lg hover:bg-cyan-400/10 transition-all text-center"
+          >
+            🏆 View Leaderboard
+          </Link>
         </div>
 
-        <div className="mt-16 max-w-2xl">
+        <div className="max-w-2xl">
           <div className="border border-purple-400/20 rounded-lg p-6 bg-purple-400/5 backdrop-blur">
             <h3 className="text-purple-300 font-semibold mb-3">How It Works</h3>
             <ul className="space-y-2 text-purple-200/70 text-sm">
