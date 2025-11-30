@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 
+interface LeaderboardEntry {
+  score: number;
+  message: string;
+  date: string;
+}
+
 export async function GET() {
   try {
     // TODO: Fetch top score for each day from your database
@@ -7,7 +13,7 @@ export async function GET() {
     // Return with the message that corresponds to that high score
     // Only show dates before today (so current day can accumulate)
     
-    const leaderboard = [
+    const leaderboard: LeaderboardEntry[] = [
       // Example structure:
       // { score: 150, message: "Example message", date: "2025-11-29" }
     ];
