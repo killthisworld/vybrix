@@ -60,8 +60,8 @@ export default function ReceivePage() {
   const [showLanding, setShowLanding] = useState(false);
   const [landingProgress, setLandingProgress] = useState(0);
   
-  const gameLoopRef = useRef<number>();
-  const enemySpawnRef = useRef<number>();
+  const gameLoopRef = useRef<number | null>(null);
+  const enemySpawnRef = useRef<number | null>(null);
   const nextEnemyId = useRef(0);
   const nextBulletId = useRef(0);
   const nextExplosionId = useRef(0);
