@@ -99,6 +99,18 @@ export default function ReceivePage() {
     }
   };
 
+  const handleReport = () => {
+    const reason = prompt("Please describe why you're reporting this message:");
+    if (reason && reason.trim()) {
+      const token = localStorage.getItem('vybrix_token');
+      const subject = encodeURIComponent('Inappropriate Message Report');
+      const body = encodeURIComponent(
+        `Reason: ${reason}\n\nToken: ${token}\n\nMessage: "${receivedMessage}"`
+      );
+      window.location.href = `mailto:vybrix.help@gmail.com?subject=${subject}&body=${body}`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
@@ -133,7 +145,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden pb-16">
       <div className="fixed inset-0">
         {stars.map((star, i) => (
           <div
@@ -253,10 +265,16 @@ export default function ReceivePage() {
                 </p>
               </div>
 
-              <div className="text-center">
+              <div className="text-center space-y-3">
                 <p className="text-purple-300/60 text-sm">
                   Send another message tomorrow to receive a new match
                 </p>
+                <button
+                  onClick={handleReport}
+                  className="text-red-400/70 hover:text-red-400 text-xs underline transition-colors"
+                >
+                  Report inappropriate content
+                </button>
               </div>
             </div>
           )}
