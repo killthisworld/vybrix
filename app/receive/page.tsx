@@ -151,7 +151,7 @@ export default function ReceivePage() {
       <style jsx>{`
         @keyframes moveStars {
           from {
-            transform: translateX(0);
+            transform: translateX(100vw);
           }
           to {
             transform: translateX(-100vw);
@@ -163,25 +163,16 @@ export default function ReceivePage() {
             transform: translateX(0) translateY(0);
           }
           25% {
-            transform: translateX(0) translateY(-10px);
+            transform: translateX(0) translateY(-8px);
           }
           50% {
             transform: translateX(0) translateY(0);
           }
           75% {
-            transform: translateX(0) translateY(10px);
+            transform: translateX(0) translateY(8px);
           }
           100% {
             transform: translateX(0) translateY(0);
-          }
-        }
-        
-        @keyframes beamPulse {
-          0%, 100% {
-            opacity: 0.3;
-          }
-          50% {
-            opacity: 0.7;
           }
         }
         
@@ -192,10 +183,10 @@ export default function ReceivePage() {
         
         @keyframes glow {
           0%, 100% {
-            filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.5));
+            filter: drop-shadow(0 0 15px rgba(100, 116, 139, 0.6));
           }
           50% {
-            filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.8));
+            filter: drop-shadow(0 0 25px rgba(148, 163, 184, 0.8));
           }
         }
         
@@ -205,10 +196,6 @@ export default function ReceivePage() {
         
         .ufo-container {
           animation: flyUFO 3s ease-in-out infinite, glow 2s ease-in-out infinite;
-        }
-        
-        .beam {
-          animation: beamPulse 1.5s ease-in-out infinite;
         }
         
         .loading-dot {
@@ -225,12 +212,12 @@ export default function ReceivePage() {
                 key={i}
                 className="absolute rounded-full bg-white moving-star"
                 style={{
-                  left: `${100 + star.x}%`,
+                  left: `${star.x}%`,
                   top: `${star.y}%`,
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
-                  animationDuration: `${star.speed}s`,
+                  animationDuration: `${star.speed * 10}s`,
                 }}
               />
             ))}
@@ -239,66 +226,82 @@ export default function ReceivePage() {
           {/* UFO in center of screen */}
           <div className="fixed inset-0 flex items-center justify-center z-20">
             <div className="ufo-container">
-              <svg width="200" height="150" viewBox="0 0 200 150" className="drop-shadow-2xl">
-                {/* Tractor beam */}
-                <path
-                  d="M 100 80 L 70 140 L 130 140 Z"
-                  fill="url(#beamGradient)"
-                  opacity="0.4"
-                  className="beam"
-                />
-                
-                {/* UFO dome (top glass part) */}
-                <ellipse cx="100" cy="60" rx="35" ry="25" fill="url(#domeGradient)" opacity="0.8" />
-                <ellipse cx="100" cy="57" rx="30" ry="20" fill="#60a5fa" opacity="0.3" />
-                
-                {/* UFO main body (saucer) */}
-                <ellipse cx="100" cy="70" rx="60" ry="20" fill="url(#saucerGradient)" />
-                <ellipse cx="100" cy="68" rx="60" ry="18" fill="url(#saucerTopGradient)" />
-                
-                {/* Lights on the saucer */}
-                <circle cx="60" cy="70" r="4" fill="#fbbf24" opacity="0.9">
-                  <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="80" cy="72" r="4" fill="#10b981" opacity="0.9">
-                  <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="100" cy="73" r="4" fill="#ef4444" opacity="0.9">
-                  <animate attributeName="opacity" values="0.5;1;0.5" dur="0.8s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="120" cy="72" r="4" fill="#10b981" opacity="0.9">
-                  <animate attributeName="opacity" values="0.5;1;0.5" dur="1.1s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="140" cy="70" r="4" fill="#fbbf24" opacity="0.9">
-                  <animate attributeName="opacity" values="0.5;1;0.5" dur="0.9s" repeatCount="indefinite" />
-                </circle>
-                
-                {/* Gradients */}
+              <svg width="240" height="120" viewBox="0 0 240 120" className="drop-shadow-2xl">
+                {/* Main saucer body - realistic metallic look */}
                 <defs>
-                  <linearGradient id="domeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#93c5fd" />
-                    <stop offset="100%" stopColor="#3b82f6" />
+                  <radialGradient id="metalGradient" cx="50%" cy="40%">
+                    <stop offset="0%" stopColor="#e2e8f0" />
+                    <stop offset="40%" stopColor="#94a3b8" />
+                    <stop offset="70%" stopColor="#64748b" />
+                    <stop offset="100%" stopColor="#475569" />
+                  </radialGradient>
+                  
+                  <radialGradient id="domeGradient" cx="50%" cy="30%">
+                    <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#0369a1" stopOpacity="0.9" />
+                  </radialGradient>
+                  
+                  <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#cbd5e1" />
+                    <stop offset="50%" stopColor="#64748b" />
+                    <stop offset="100%" stopColor="#334155" />
                   </linearGradient>
-                  <linearGradient id="saucerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#6b7280" />
-                    <stop offset="50%" stopColor="#9ca3af" />
-                    <stop offset="100%" stopColor="#4b5563" />
-                  </linearGradient>
-                  <linearGradient id="saucerTopGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#d1d5db" />
-                    <stop offset="100%" stopColor="#9ca3af" />
-                  </linearGradient>
-                  <linearGradient id="beamGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
-                  </linearGradient>
+
+                  <filter id="metalShine">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                    <feOffset dx="0" dy="1" result="offsetblur"/>
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.3"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
                 </defs>
+                
+                {/* Bottom shadow/rim */}
+                <ellipse cx="120" cy="65" rx="85" ry="10" fill="#1e293b" opacity="0.4" />
+                
+                {/* Main saucer disc */}
+                <ellipse cx="120" cy="60" rx="90" ry="22" fill="url(#metalGradient)" filter="url(#metalShine)" />
+                
+                {/* Metallic rim detail */}
+                <ellipse cx="120" cy="58" rx="90" ry="20" fill="none" stroke="url(#edgeGradient)" strokeWidth="2" opacity="0.6" />
+                
+                {/* Center band */}
+                <ellipse cx="120" cy="60" rx="88" ry="8" fill="#475569" opacity="0.5" />
+                
+                {/* Top dome (cockpit) */}
+                <ellipse cx="120" cy="45" rx="35" ry="22" fill="url(#domeGradient)" />
+                
+                {/* Dome highlight */}
+                <ellipse cx="120" cy="42" rx="25" ry="15" fill="#f0f9ff" opacity="0.3" />
+                
+                {/* Small port windows */}
+                <ellipse cx="80" cy="58" rx="5" ry="3" fill="#fbbf24" opacity="0.9">
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="100" cy="60" rx="5" ry="3" fill="#22d3ee" opacity="0.9">
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="140" cy="60" rx="5" ry="3" fill="#22d3ee" opacity="0.9">
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.3s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="160" cy="58" rx="5" ry="3" fill="#fbbf24" opacity="0.9">
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.4s" repeatCount="indefinite" />
+                </ellipse>
+                
+                {/* Panel lines for detail */}
+                <path d="M 120 38 Q 100 55, 120 62" stroke="#334155" strokeWidth="1" fill="none" opacity="0.3" />
+                <path d="M 120 38 Q 140 55, 120 62" stroke="#334155" strokeWidth="1" fill="none" opacity="0.3" />
               </svg>
             </div>
           </div>
 
-          {/* Finding your match text */}
-          <div className="fixed top-12 left-0 right-0 flex items-center justify-center z-30">
+          {/* Finding your match text - moved down */}
+          <div className="fixed top-32 left-0 right-0 flex items-center justify-center z-30">
             <div className="flex items-center space-x-3">
               <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
                 Finding your match
