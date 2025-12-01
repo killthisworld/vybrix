@@ -62,6 +62,8 @@ export default function ReceivePage() {
   
   // Game state
   const [gameStarted, setGameStarted] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
   const [ufoY, setUfoY] = useState(40);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [bullets, setBullets] = useState<Bullet[]>([]);
@@ -106,13 +108,13 @@ export default function ReceivePage() {
   }, []);
 
   useEffect(() => {
-    if (gameStarted) {
+    if (gameStarted && !gameOver) {
       startGame();
     } else {
       stopGame();
     }
     return () => stopGame();
-  }, [gameStarted]);
+  }, [gameStarted, gameOver]);
 
   useEffect(() => {
     if (status === 'received' && receivedMessage) {
@@ -136,6 +138,19 @@ export default function ReceivePage() {
     }
   };
 
+  const saveGameScore = async (gameScore: number) => {
+    try {
+      const token = localStorage.getItem('vybrix_token');
+      await fetch('/api/save-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, score: gameScore }),
+      });
+    } catch (err) {
+      console.error('Failed to save game score:', err);
+    }
+  };
+
   const animateLanding = () => {
     let progress = 0;
     const interval = setInterval(() => {
@@ -146,6 +161,22 @@ export default function ReceivePage() {
         setTimeout(() => setShowLanding(false), 1000);
       }
     }, 30);
+  };
+
+  const resetGame = () => {
+    setGameOver(false);
+    setScore(0);
+    setLives(3);
+    setFinalScore(0);
+    setEnemies([]);
+    setBullets([]);
+    setExplosions([]);
+    setCoins([]);
+    setUfoY(40);
+    nextEnemyId.current = 0;
+    nextBulletId.current = 0;
+    nextExplosionId.current = 0;
+    nextCoinId.current = 0;
   };
 
   const startGame = () => {
@@ -282,9 +313,14 @@ export default function ReceivePage() {
           setLives(prev => {
             const newLives = prev - 1;
             if (newLives <= 0) {
-              // Game over - reset everything
-              setScore(0);
-              return 3;
+              // Game over - save score and show game over screen
+              setScore(currentScore => {
+                setFinalScore(currentScore);
+                saveGameScore(currentScore);
+                setGameOver(true);
+                return currentScore;
+              });
+              return 0;
             }
             return newLives;
           });
@@ -734,7 +770,7 @@ export default function ReceivePage() {
         </>
       )}
 
-      {(status === 'waiting' || status === 'pending') && gameStarted && (
+      {(status === 'waiting' || status === 'pending') && gameStarted && !gameOver && (
         <>
           <div style={{ height: 'calc(100dvh - 100px)' }} className="relative overflow-hidden">
             <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
@@ -755,12 +791,15 @@ export default function ReceivePage() {
             </div>
 
             {/* Lives display - top left */}
-            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-30 flex gap-1 text-2xl md:text-3xl">
-              {[...Array(3)].map((_, i) => (
-                <span key={i}>
-                  {i < lives ? '👽' : '❌'}
-                </span>
-              ))}
+            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-30 flex items-center gap-2">
+              <span className="text-base md:text-xl font-bold text-cyan-400">Life count:</span>
+              <div className="flex gap-1 text-2xl md:text-3xl">
+                {[...Array(3)].map((_, i) => (
+                  <span key={i}>
+                    {i < lives ? '👽' : '❌'}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Score display - top right */}
@@ -971,6 +1010,62 @@ export default function ReceivePage() {
             >
               SHOOT
             </button>
+          </div>
+        </>
+      )}
+
+      {/* Game Over Screen */}
+      {gameStarted && gameOver && (
+        <>
+          <div className="fixed inset-0">
+            {stars.map((star, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-white moving-star-slow"
+                style={{
+                  left: `${star.x}%`,
+                  top: `${star.y}%`,
+                  width: `${star.size}px`,
+                  height: `${star.size}px`,
+                  opacity: star.opacity,
+                  animationDuration: `${star.speed * 15}s`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4">
+            <div className="text-center max-w-md">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 text-transparent bg-clip-text">
+                GAME OVER
+              </h2>
+              
+              <div className="mb-8">
+                <p className="text-purple-300 text-lg mb-2">Your Score</p>
+                <p className="text-6xl md:text-7xl font-bold text-cyan-400">{finalScore}</p>
+              </div>
+
+              <p className="text-purple-200/70 text-sm mb-6">
+                Your score has been saved! The highest score of the day will be featured on the leaderboard.
+              </p>
+
+              <button
+                onClick={resetGame}
+                className="px-8 py-4 bg-gradient-to-r from-green-500 to-cyan-500 text-white text-xl font-bold rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all transform hover:scale-105 mb-4"
+              >
+                🎮 Play Again
+              </button>
+
+              <div className="text-center mt-6">
+                <Link 
+                  href="/" 
+                  onClick={() => setGameStarted(false)}
+                  className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors"
+                >
+                  ← Back to waiting
+                </Link>
+              </div>
+            </div>
           </div>
         </>
       )}
