@@ -6,15 +6,20 @@ interface LeaderboardEntry {
   date: string;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // TODO: Fetch top score for each day from your database
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get('month') || String(new Date().getMonth() + 1);
+    const year = searchParams.get('year') || String(new Date().getFullYear());
+    
+    // TODO: Fetch scores from your database for the specified month/year
+    // Filter by date where MONTH(date) = month AND YEAR(date) = year
     // Group by date, get MAX(score) for each date
+    // Order by date DESC (most recent first)
     // Return with the message that corresponds to that high score
-    // Only show dates before today (so current day can accumulate)
     
     const leaderboard: LeaderboardEntry[] = [
-      // Example structure:
+      // Example structure (sorted by date DESC - most recent first):
       // { score: 150, message: "Example message", date: "2025-11-29" }
     ];
     

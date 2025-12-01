@@ -8,6 +8,8 @@ interface Star {
   y: number;
   size: number;
   opacity: number;
+  speed: number;
+  startX: number;
 }
 
 interface LeaderboardEntry {
@@ -22,6 +24,11 @@ export default function LeaderboardPage() {
   const [stars, setStars] = useState<Star[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get current month/year
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1); // 1-12
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
   useEffect(() => {
     const newStars = Array.from({ length: STAR_COUNT }, () => ({
@@ -29,15 +36,18 @@ export default function LeaderboardPage() {
       y: Math.random() * 100,
       size: Math.random() * 1.5 + 0.5,
       opacity: Math.random() * 0.5 + 0.5,
+      speed: Math.random() * 2 + 1,
+      startX: Math.random() * 200 - 100,
     }));
     setStars(newStars);
 
     fetchLeaderboard();
-  }, []);
+  }, [selectedMonth, selectedYear]);
 
   const fetchLeaderboard = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/leaderboard');
+      const response = await fetch(`/api/leaderboard?month=${selectedMonth}&year=${selectedYear}`);
       const data = await response.json();
       setLeaderboard(data.leaderboard || []);
     } catch (err) {
@@ -47,19 +57,38 @@ export default function LeaderboardPage() {
     }
   };
 
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Generate year options (current year and previous 2 years)
+  const years = [selectedYear, selectedYear - 1, selectedYear - 2];
+
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pb-16">
+      <style jsx>{`
+        @keyframes moveStarsSlow {
+          from { transform: translateX(0); }
+          to { transform: translateX(-200vw); }
+        }
+        .moving-star-slow {
+          animation: moveStarsSlow linear infinite;
+        }
+      `}</style>
+
       <div className="fixed inset-0">
         {stars.map((star, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full bg-white moving-star-slow"
             style={{
-              left: `${star.x}%`,
+              left: `${star.startX}%`,
               top: `${star.y}%`,
               width: `${star.size}px`,
               height: `${star.size}px`,
               opacity: star.opacity,
+              animationDuration: `${star.speed * 15}s`,
             }}
           />
         ))}
@@ -74,9 +103,33 @@ export default function LeaderboardPage() {
             <p className="text-purple-200/60">
               Top scores and messages from each day
             </p>
-            <p className="text-purple-300/40 text-sm mt-2">
-              Updates daily at midnight
-            </p>
+          </div>
+
+          {/* Month/Year Filter */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-3 items-center justify-center">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="px-4 py-2 bg-purple-400/10 border-2 border-purple-400/30 text-purple-300 rounded-lg focus:outline-none focus:border-cyan-400 transition-colors"
+            >
+              {months.map((month, index) => (
+                <option key={month} value={index + 1} className="bg-black">
+                  {month}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-4 py-2 bg-purple-400/10 border-2 border-purple-400/30 text-purple-300 rounded-lg focus:outline-none focus:border-cyan-400 transition-colors"
+            >
+              {years.map((year) => (
+                <option key={year} value={year} className="bg-black">
+                  {year}
+                </option>
+              ))}
+            </select>
           </div>
 
           {loading ? (
@@ -87,7 +140,7 @@ export default function LeaderboardPage() {
             </div>
           ) : leaderboard.length === 0 ? (
             <div className="border-2 border-purple-400/30 rounded-lg p-8 bg-purple-400/5 backdrop-blur text-center">
-              <p className="text-purple-300">No high scores yet. Be the first!</p>
+              <p className="text-purple-300">No high scores for {months[selectedMonth - 1]} {selectedYear}</p>
             </div>
           ) : (
             <div className="space-y-4">

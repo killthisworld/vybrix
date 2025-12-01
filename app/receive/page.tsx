@@ -10,6 +10,7 @@ interface Star {
   size: number;
   opacity: number;
   speed: number;
+  startX?: number;
 }
 
 interface Enemy {
@@ -132,11 +133,11 @@ export default function ReceivePage() {
   const animateLanding = () => {
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 0.5; // Slower animation (was 2)
+      progress += 1; // Faster animation (was 0.5)
       setLandingProgress(progress);
       if (progress >= 100) {
         clearInterval(interval);
-        setTimeout(() => setShowLanding(false), 1500); // Pause on planet
+        setTimeout(() => setShowLanding(false), 1000);
       }
     }, 30);
   };
@@ -394,10 +395,8 @@ export default function ReceivePage() {
   }
 
   if (showLanding) {
-    // UFO starts at top (0%) and lands at 65%
     const ufoLandingY = landingProgress * 0.65;
-    // Earth stays at bottom (70%)
-    const earthY = 70;
+    const moonY = 70;
     
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
@@ -423,47 +422,73 @@ export default function ReceivePage() {
             from { transform: translateX(100vw); }
             to { transform: translateX(-100vw); }
           }
+          
+          @keyframes arcadeFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+          
           .moving-star-slow {
             animation: moveStarsSlow linear infinite;
+          }
+          
+          .arcade-flash {
+            animation: arcadeFlash 0.8s ease-in-out infinite;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+            letter-spacing: 0.1em;
           }
         `}</style>
 
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          {/* Earth - stays at bottom */}
+          {/* Realistic Moon */}
           <div 
             className="absolute"
             style={{
               left: '50%',
-              top: `${earthY}%`,
+              top: `${moonY}%`,
               transform: 'translate(-50%, -50%)'
             }}
           >
             <svg width="300" height="300" viewBox="0 0 300 300">
               <defs>
-                <radialGradient id="earthGrad">
-                  <stop offset="0%" stopColor="#4a9eff" />
-                  <stop offset="50%" stopColor="#2563eb" />
-                  <stop offset="100%" stopColor="#1e40af" />
+                <radialGradient id="moonGrad">
+                  <stop offset="0%" stopColor="#d4d4d4" />
+                  <stop offset="50%" stopColor="#a3a3a3" />
+                  <stop offset="100%" stopColor="#737373" />
                 </radialGradient>
               </defs>
-              {/* Ocean base */}
-              <circle cx="150" cy="150" r="140" fill="url(#earthGrad)" />
               
-              {/* Continents - green landmasses */}
-              <ellipse cx="120" cy="100" rx="45" ry="35" fill="#10b981" opacity="0.9" />
-              <ellipse cx="180" cy="120" rx="35" ry="40" fill="#059669" opacity="0.9" />
-              <ellipse cx="140" cy="170" rx="50" ry="30" fill="#047857" opacity="0.9" />
-              <ellipse cx="200" cy="180" rx="30" ry="25" fill="#10b981" opacity="0.9" />
-              <ellipse cx="100" cy="200" rx="25" ry="20" fill="#059669" opacity="0.9" />
+              {/* Moon base */}
+              <circle cx="150" cy="150" r="140" fill="url(#moonGrad)" />
               
-              {/* Cloud layer */}
-              <ellipse cx="80" cy="130" rx="30" ry="15" fill="#ffffff" opacity="0.3" />
-              <ellipse cx="220" cy="150" rx="35" ry="18" fill="#ffffff" opacity="0.3" />
-              <ellipse cx="150" cy="90" rx="25" ry="12" fill="#ffffff" opacity="0.3" />
+              {/* Large craters */}
+              <circle cx="120" cy="100" r="35" fill="#8c8c8c" opacity="0.6" />
+              <circle cx="120" cy="100" r="25" fill="#6b6b6b" opacity="0.4" />
+              <circle cx="200" cy="130" r="28" fill="#8c8c8c" opacity="0.6" />
+              <circle cx="200" cy="130" r="18" fill="#6b6b6b" opacity="0.4" />
+              <circle cx="90" cy="180" r="25" fill="#8c8c8c" opacity="0.6" />
+              <circle cx="90" cy="180" r="15" fill="#6b6b6b" opacity="0.4" />
+              <circle cx="180" cy="200" r="32" fill="#8c8c8c" opacity="0.6" />
+              <circle cx="180" cy="200" r="22" fill="#6b6b6b" opacity="0.4" />
+              
+              {/* Medium craters */}
+              <circle cx="160" cy="90" r="15" fill="#8c8c8c" opacity="0.5" />
+              <circle cx="220" cy="180" r="12" fill="#8c8c8c" opacity="0.5" />
+              <circle cx="130" cy="220" r="18" fill="#8c8c8c" opacity="0.5" />
+              <circle cx="70" cy="130" r="10" fill="#8c8c8c" opacity="0.5" />
+              
+              {/* Small craters */}
+              <circle cx="145" cy="120" r="8" fill="#8c8c8c" opacity="0.4" />
+              <circle cx="175" cy="160" r="6" fill="#8c8c8c" opacity="0.4" />
+              <circle cx="110" cy="150" r="7" fill="#8c8c8c" opacity="0.4" />
+              <circle cx="195" cy="105" r="5" fill="#8c8c8c" opacity="0.4" />
+              <circle cx="85" cy="210" r="6" fill="#8c8c8c" opacity="0.4" />
+              <circle cx="210" cy="210" r="8" fill="#8c8c8c" opacity="0.4" />
             </svg>
           </div>
 
-          {/* UFO - descends from top */}
+          {/* UFO */}
           <div 
             className="absolute"
             style={{
@@ -507,8 +532,8 @@ export default function ReceivePage() {
         </div>
 
         <div className="fixed top-12 left-0 right-0 text-center z-30">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
-            Message Received!
+          <h2 className="text-4xl md:text-5xl font-bold arcade-flash bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+            MESSAGE RECEIVED!
           </h2>
         </div>
       </div>
