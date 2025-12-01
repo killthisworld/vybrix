@@ -171,6 +171,8 @@ export default function ReceivePage() {
     }, 3000);
 
     const gameLoop = () => {
+      const ufoX = 15; // UFO position constant
+      
       setEnemies(prev => prev
         .map(enemy => ({ ...enemy, x: enemy.x - enemy.speed }))
         .filter(enemy => enemy.x > -10)
@@ -181,16 +183,32 @@ export default function ReceivePage() {
         .filter(bullet => bullet.x < 105)
       );
       
-      setCoins(prev => prev
-        .map(coin => ({ ...coin, x: coin.x - 0.4, rotation: coin.rotation + 5 }))
-        .filter(coin => coin.x > -10)
-      );
+      setCoins(prev => {
+        const currentUfoY = ufoY;
+        return prev
+          .map(coin => ({ ...coin, x: coin.x - 0.4, rotation: coin.rotation + 5 }))
+          .filter(coin => {
+            if (coin.x < -10) return false;
+            
+            // Check collision with UFO for coin absorption
+            const distance = Math.sqrt(
+              Math.pow(ufoX - coin.x, 2) + Math.pow(currentUfoY - coin.y, 2)
+            );
+            
+            if (distance < 8) {
+              setScore(prev => prev + 10);
+              return false; // Remove coin
+            }
+            return true; // Keep coin
+          });
+      });
 
       setExplosions(prev => prev
         .map(exp => ({ ...exp, frame: exp.frame + 1 }))
         .filter(exp => exp.frame < 15)
       );
 
+      // Bullet-enemy collision
       setBullets(prevBullets => {
         let newBullets = [...prevBullets];
         
@@ -222,32 +240,19 @@ export default function ReceivePage() {
         
         return newBullets;
       });
-      
-      setCoins(prevCoins => {
-        const ufoX = 15;
-        return prevCoins.filter(coin => {
-          const distance = Math.sqrt(
-            Math.pow(ufoX - coin.x, 2) + Math.pow(ufoY - coin.y, 2)
-          );
-          
-          if (distance < 10) {
-            setScore(prev => prev + 10);
-            return false;
-          }
-          return true;
-        });
-      });
 
+      // Enemy-UFO collision (only when they actually hit)
       setEnemies(prevEnemies => {
-        const ufoX = 15;
+        const currentUfoY = ufoY;
         let hit = false;
         
         const remainingEnemies = prevEnemies.filter(enemy => {
           const distance = Math.sqrt(
-            Math.pow(ufoX - enemy.x, 2) + Math.pow(ufoY - enemy.y, 2)
+            Math.pow(ufoX - enemy.x, 2) + Math.pow(currentUfoY - enemy.y, 2)
           );
           
-          if (distance < 8) {
+          // Only hit if VERY close (within 6 units instead of 8)
+          if (distance < 6) {
             hit = true;
             setExplosions(prev => [...prev, {
               id: nextExplosionId.current++,
@@ -397,9 +402,8 @@ export default function ReceivePage() {
   if (showLanding) {
     const ufoLandingY = landingProgress * 0.65;
     const moonY = 70;
-    // Landing legs extend when progress > 60%
     const legsExtended = landingProgress > 60;
-    const legExtension = Math.min((landingProgress - 60) / 40, 1); // 0 to 1
+    const legExtension = Math.min((landingProgress - 60) / 40, 1);
     
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
@@ -444,7 +448,6 @@ export default function ReceivePage() {
         `}</style>
 
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          {/* Realistic Moon */}
           <div 
             className="absolute"
             style={{
@@ -462,10 +465,8 @@ export default function ReceivePage() {
                 </radialGradient>
               </defs>
               
-              {/* Moon base */}
               <circle cx="150" cy="150" r="140" fill="url(#moonGrad)" />
               
-              {/* Large craters */}
               <circle cx="120" cy="100" r="35" fill="#8c8c8c" opacity="0.6" />
               <circle cx="120" cy="100" r="25" fill="#6b6b6b" opacity="0.4" />
               <circle cx="200" cy="130" r="28" fill="#8c8c8c" opacity="0.6" />
@@ -475,13 +476,11 @@ export default function ReceivePage() {
               <circle cx="180" cy="200" r="32" fill="#8c8c8c" opacity="0.6" />
               <circle cx="180" cy="200" r="22" fill="#6b6b6b" opacity="0.4" />
               
-              {/* Medium craters */}
               <circle cx="160" cy="90" r="15" fill="#8c8c8c" opacity="0.5" />
               <circle cx="220" cy="180" r="12" fill="#8c8c8c" opacity="0.5" />
               <circle cx="130" cy="220" r="18" fill="#8c8c8c" opacity="0.5" />
               <circle cx="70" cy="130" r="10" fill="#8c8c8c" opacity="0.5" />
               
-              {/* Small craters */}
               <circle cx="145" cy="120" r="8" fill="#8c8c8c" opacity="0.4" />
               <circle cx="175" cy="160" r="6" fill="#8c8c8c" opacity="0.4" />
               <circle cx="110" cy="150" r="7" fill="#8c8c8c" opacity="0.4" />
@@ -491,7 +490,6 @@ export default function ReceivePage() {
             </svg>
           </div>
 
-          {/* UFO with landing legs */}
           <div 
             className="absolute"
             style={{
@@ -514,10 +512,8 @@ export default function ReceivePage() {
                 </radialGradient>
               </defs>
               
-              {/* Landing legs - extend when landing */}
               {legsExtended && (
                 <>
-                  {/* Left leg */}
                   <line 
                     x1="30" 
                     y1="55" 
@@ -533,7 +529,6 @@ export default function ReceivePage() {
                     fill="#4b5563"
                   />
                   
-                  {/* Center-left leg */}
                   <line 
                     x1="50" 
                     y1="58" 
@@ -549,7 +544,6 @@ export default function ReceivePage() {
                     fill="#4b5563"
                   />
                   
-                  {/* Center-right leg */}
                   <line 
                     x1="90" 
                     y1="58" 
@@ -565,7 +559,6 @@ export default function ReceivePage() {
                     fill="#4b5563"
                   />
                   
-                  {/* Right leg */}
                   <line 
                     x1="110" 
                     y1="55" 
@@ -916,22 +909,25 @@ export default function ReceivePage() {
             })}
           </div>
 
-          <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-4 md:gap-12 px-4 md:px-8 flex-shrink-0">
-            <div className="flex gap-2 md:gap-3">
+          {/* Controller Area - repositioned buttons */}
+          <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
+            {/* Left side - Up/Down buttons */}
+            <div className="flex flex-col gap-2">
               <button
                 onClick={moveUp}
-                className="w-12 h-12 md:w-14 md:h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-lg md:text-xl font-bold active:scale-95 transition-all shadow-lg"
+                className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
               >
                 ▲
               </button>
               <button
                 onClick={moveDown}
-                className="w-12 h-12 md:w-14 md:h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-lg md:text-xl font-bold active:scale-95 transition-all shadow-lg"
+                className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
               >
                 ▼
               </button>
             </div>
 
+            {/* Center - Exit */}
             <div className="text-center">
               <Link 
                 href="/" 
@@ -942,9 +938,10 @@ export default function ReceivePage() {
               </Link>
             </div>
             
+            {/* Right side - Shoot button */}
             <button
               onClick={shoot}
-              className="w-16 h-16 md:w-20 md:h-20 bg-red-600 hover:bg-red-700 rounded-full text-white text-sm md:text-base font-bold active:scale-95 transition-all shadow-2xl"
+              className="w-20 h-20 md:w-24 md:h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-base md:text-lg font-bold active:scale-95 transition-all shadow-2xl"
             >
               SHOOT
             </button>
