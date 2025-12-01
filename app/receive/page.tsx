@@ -85,7 +85,7 @@ export default function ReceivePage() {
       y: Math.random() * 100,
       size: Math.random() * 2 + 0.5,
       opacity: Math.random() * 0.7 + 0.3,
-      speed: Math.random() * 2 + 1, // Slower for background
+      speed: Math.random() * 2 + 1,
     }));
     setStars(newStars);
   }, []);
@@ -222,7 +222,6 @@ export default function ReceivePage() {
         return newBullets;
       });
       
-      // Check coin collection - coins absorbed by UFO
       setCoins(prevCoins => {
         const ufoX = 15;
         return prevCoins.filter(coin => {
@@ -230,7 +229,6 @@ export default function ReceivePage() {
             Math.pow(ufoX - coin.x, 2) + Math.pow(ufoY - coin.y, 2)
           );
           
-          // Larger collision radius for better coin absorption
           if (distance < 10) {
             setScore(prev => prev + 10);
             return false;
@@ -354,7 +352,6 @@ export default function ReceivePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
-        {/* Slow moving stars background */}
         <div className="fixed inset-0">
           {stars.map((star, i) => (
             <div
@@ -402,7 +399,6 @@ export default function ReceivePage() {
     
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
-        {/* Slow moving stars background */}
         <div className="fixed inset-0">
           {stars.map((star, i) => (
             <div
@@ -505,7 +501,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="h-screen bg-black relative overflow-hidden flex flex-col">
+    <div style={{ height: '100dvh' }} className="bg-black relative overflow-hidden flex flex-col">
       <style jsx>{`
         @keyframes moveStars {
           from { transform: translateX(100vw); }
@@ -557,7 +553,6 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && !gameStarted && (
         <>
-          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
@@ -616,8 +611,8 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && gameStarted && (
         <>
-          {/* Game Screen Area - responsive */}
-          <div style={{ height: 'calc(100vh - 100px)' }} className="relative overflow-hidden">
+          {/* Game Screen Area */}
+          <div style={{ height: 'calc(100dvh - 100px)' }} className="relative overflow-hidden">
             <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
               {stars.map((star, i) => (
                 <div
@@ -810,7 +805,7 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area - responsive */}
+          {/* Controller Area - fixed 100px */}
           <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-4 md:gap-12 px-4 md:px-8 flex-shrink-0">
             <div className="flex gap-2 md:gap-3">
               <button
@@ -849,7 +844,6 @@ export default function ReceivePage() {
 
       {status === 'received' && receivedMessage && !showLanding && (
         <>
-          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
@@ -913,7 +907,6 @@ export default function ReceivePage() {
 
       {status === 'no_message_sent' && (
         <>
-          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
@@ -960,7 +953,6 @@ export default function ReceivePage() {
 
       {status === 'no_match_found' && (
         <>
-          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
