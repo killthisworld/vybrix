@@ -255,36 +255,53 @@ export default function ReceivePage() {
         .filter(exp => exp.frame < 15)
       );
 
+      // Bullet-enemy collision - bullet disappears on first hit
       setBullets(prevBullets => {
-        let newBullets = [...prevBullets];
+        let remainingBullets = [...prevBullets];
+        const bulletsToRemove = new Set<number>();
         
         setEnemies(prevEnemies => {
-          let newEnemies = [...prevEnemies];
+          let remainingEnemies = [...prevEnemies];
+          const enemiesToRemove = new Set<number>();
           
           prevBullets.forEach(bullet => {
+            // Skip if bullet already hit something
+            if (bulletsToRemove.has(bullet.id)) return;
+            
             prevEnemies.forEach(enemy => {
+              // Skip if enemy already destroyed
+              if (enemiesToRemove.has(enemy.id)) return;
+              
               const distance = Math.sqrt(
                 Math.pow(bullet.x - enemy.x, 2) + Math.pow(bullet.y - enemy.y, 2)
               );
               
               if (distance < 5) {
-                newBullets = newBullets.filter(b => b.id !== bullet.id);
-                newEnemies = newEnemies.filter(e => e.id !== enemy.id);
+                // Mark bullet and enemy for removal
+                bulletsToRemove.add(bullet.id);
+                enemiesToRemove.add(enemy.id);
+                
+                // Create explosion at enemy position
                 setExplosions(prev => [...prev, {
                   id: nextExplosionId.current++,
                   x: enemy.x,
                   y: enemy.y,
                   frame: 0
                 }]);
+                
                 setScore(prev => prev + 5);
               }
             });
           });
           
-          return newEnemies;
+          // Remove destroyed enemies
+          remainingEnemies = remainingEnemies.filter(e => !enemiesToRemove.has(e.id));
+          return remainingEnemies;
         });
         
-        return newBullets;
+        // Remove bullets that hit something
+        remainingBullets = remainingBullets.filter(b => !bulletsToRemove.has(b.id));
+        return remainingBullets;
       });
 
       setEnemies(prevEnemies => {
@@ -1019,7 +1036,6 @@ export default function ReceivePage() {
         </>
       )}
 
-      {/* Rest of the component remains the same... */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
