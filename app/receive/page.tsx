@@ -16,7 +16,7 @@ interface Enemy {
   id: number;
   x: number;
   y: number;
-  type: 'spaceship1' | 'spaceship2' | 'spaceship3' | 'asteroid';
+  type: 'missile1' | 'missile2' | 'missile3' | 'asteroid';
   speed: number;
 }
 
@@ -33,8 +33,15 @@ interface Explosion {
   frame: number;
 }
 
+interface Coin {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+}
+
 const STAR_COUNT = 100;
-const BOTTOM_BOUNDARY = 82;
+const GAME_AREA_BOTTOM = 75; // Game area stops before controls
 
 interface ReceiveResponse {
   status: string;
@@ -53,10 +60,12 @@ export default function ReceivePage() {
   const [nextRefresh, setNextRefresh] = useState<number>(5);
   
   // Game state
-  const [ufoY, setUfoY] = useState(50);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [ufoY, setUfoY] = useState(40);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [bullets, setBullets] = useState<Bullet[]>([]);
   const [explosions, setExplosions] = useState<Explosion[]>([]);
+  const [coins, setCoins] = useState<Coin[]>([]);
   const [isHit, setIsHit] = useState(false);
   const [score, setScore] = useState(0);
   const [showLanding, setShowLanding] = useState(false);
@@ -64,9 +73,17 @@ export default function ReceivePage() {
   
   const gameLoopRef = useRef<number | null>(null);
   const enemySpawnRef = useRef<number | null>(null);
+  const coinSpawnRef = useRef<number | null>(null);
   const nextEnemyId = useRef(0);
   const nextBulletId = useRef(0);
   const nextExplosionId = useRef(0);
+  const nextCoinId = useRef(0);
+  
+  // Audio refs
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  const shootSoundRef = useRef<HTMLAudioElement | null>(null);
+  const explosionSoundRef = useRef<HTMLAudioElement | null>(null);
+  const coinSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const newStars = Array.from({ length: STAR_COUNT }, () => ({
@@ -77,6 +94,22 @@ export default function ReceivePage() {
       speed: Math.random() * 3 + 2,
     }));
     setStars(newStars);
+    
+    // Initialize audio
+    if (typeof window !== 'undefined') {
+      bgMusicRef.current = new Audio('https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3');
+      bgMusicRef.current.loop = true;
+      bgMusicRef.current.volume = 0.3;
+      
+      shootSoundRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3');
+      shootSoundRef.current.volume = 0.4;
+      
+      explosionSoundRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-hit-1704.mp3');
+      explosionSoundRef.current.volume = 0.5;
+      
+      coinSoundRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3');
+      coinSoundRef.current.volume = 0.6;
+    }
   }, []);
 
   useEffect(() => {
@@ -88,16 +121,22 @@ export default function ReceivePage() {
   }, []);
 
   useEffect(() => {
-    if (status === 'waiting' || status === 'pending') {
+    if (gameStarted) {
       startGame();
+      bgMusicRef.current?.play();
     } else {
       stopGame();
+      bgMusicRef.current?.pause();
     }
-    return () => stopGame();
-  }, [status]);
+    return () => {
+      stopGame();
+      bgMusicRef.current?.pause();
+    };
+  }, [gameStarted]);
 
   useEffect(() => {
     if (status === 'received' && receivedMessage) {
+      setGameStarted(false);
       saveScore();
       setShowLanding(true);
       animateLanding();
@@ -132,21 +171,31 @@ export default function ReceivePage() {
   const startGame = () => {
     enemySpawnRef.current = window.setInterval(() => {
       const rand = Math.random();
-      let type: 'spaceship1' | 'spaceship2' | 'spaceship3' | 'asteroid';
+      let type: 'missile1' | 'missile2' | 'missile3' | 'asteroid';
       
-      if (rand < 0.25) type = 'spaceship1';
-      else if (rand < 0.5) type = 'spaceship2';
-      else if (rand < 0.75) type = 'spaceship3';
+      if (rand < 0.25) type = 'missile1';
+      else if (rand < 0.5) type = 'missile2';
+      else if (rand < 0.75) type = 'missile3';
       else type = 'asteroid';
       
       setEnemies(prev => [...prev, {
         id: nextEnemyId.current++,
         x: 100,
-        y: Math.random() * (BOTTOM_BOUNDARY - 15) + 10,
+        y: Math.random() * (GAME_AREA_BOTTOM - 15) + 10,
         type,
         speed: Math.random() * 0.5 + 0.3
       }]);
     }, 2000);
+    
+    // Spawn coins
+    coinSpawnRef.current = window.setInterval(() => {
+      setCoins(prev => [...prev, {
+        id: nextCoinId.current++,
+        x: 100,
+        y: Math.random() * (GAME_AREA_BOTTOM - 15) + 10,
+        rotation: 0
+      }]);
+    }, 3000);
 
     const gameLoop = () => {
       setEnemies(prev => prev
@@ -155,16 +204,21 @@ export default function ReceivePage() {
       );
 
       setBullets(prev => prev
-        .map(bullet => ({ ...bullet, x: bullet.x + 1 }))
+        .map(bullet => ({ ...bullet, x: bullet.x + 1.5 }))
         .filter(bullet => bullet.x < 105)
       );
+      
+      setCoins(prev => prev
+        .map(coin => ({ ...coin, x: coin.x - 0.4, rotation: coin.rotation + 5 }))
+        .filter(coin => coin.x > -10)
+      );
 
-      // Animate explosions
       setExplosions(prev => prev
         .map(exp => ({ ...exp, frame: exp.frame + 1 }))
         .filter(exp => exp.frame < 15)
       );
 
+      // Check bullet-enemy collisions
       setBullets(prevBullets => {
         let newBullets = [...prevBullets];
         
@@ -186,7 +240,8 @@ export default function ReceivePage() {
                   y: enemy.y,
                   frame: 0
                 }]);
-                setScore(prev => prev + 10);
+                setScore(prev => prev + 5);
+                explosionSoundRef.current?.play().catch(() => {});
               }
             });
           });
@@ -196,7 +251,26 @@ export default function ReceivePage() {
         
         return newBullets;
       });
+      
+      // Check coin collection
+      setCoins(prevCoins => {
+        const ufoX = 15;
+        const collected = prevCoins.filter(coin => {
+          const distance = Math.sqrt(
+            Math.pow(ufoX - coin.x, 2) + Math.pow(ufoY - coin.y, 2)
+          );
+          
+          if (distance < 6) {
+            setScore(prev => prev + 10);
+            coinSoundRef.current?.play().catch(() => {});
+            return false;
+          }
+          return true;
+        });
+        return collected;
+      });
 
+      // Check UFO-enemy collisions
       setEnemies(prevEnemies => {
         const ufoX = 15;
         let hit = false;
@@ -214,6 +288,7 @@ export default function ReceivePage() {
               y: enemy.y,
               frame: 0
             }]);
+            explosionSoundRef.current?.play().catch(() => {});
             return false;
           }
           return true;
@@ -241,6 +316,9 @@ export default function ReceivePage() {
     if (enemySpawnRef.current) {
       clearInterval(enemySpawnRef.current);
     }
+    if (coinSpawnRef.current) {
+      clearInterval(coinSpawnRef.current);
+    }
   };
 
   const moveUp = () => {
@@ -248,7 +326,7 @@ export default function ReceivePage() {
   };
 
   const moveDown = () => {
-    setUfoY(prev => Math.min(BOTTOM_BOUNDARY, prev + 5));
+    setUfoY(prev => Math.min(GAME_AREA_BOTTOM, prev + 5));
   };
 
   const shoot = () => {
@@ -257,6 +335,7 @@ export default function ReceivePage() {
       x: 20,
       y: ufoY
     }]);
+    shootSoundRef.current?.play().catch(() => {});
   };
 
   const fetchMessage = async () => {
@@ -436,7 +515,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden flex flex-col">
       <style jsx>{`
         @keyframes moveStars {
           from { transform: translateX(100vw); }
@@ -455,6 +534,11 @@ export default function ReceivePage() {
           50% { opacity: 1; }
         }
         
+        @keyframes coinSpin {
+          0% { transform: translate(-50%, -50%) rotateY(0deg); }
+          100% { transform: translate(-50%, -50%) rotateY(360deg); }
+        }
+        
         .moving-star {
           animation: moveStars linear infinite;
         }
@@ -468,208 +552,288 @@ export default function ReceivePage() {
         }
       `}</style>
 
-      {(status === 'waiting' || status === 'pending') && (
+      {(status === 'waiting' || status === 'pending') && !gameStarted && (
         <>
-          <div className="fixed inset-0 overflow-hidden">
+          <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-white moving-star"
+                className="absolute rounded-full bg-white"
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
-                  animationDuration: `${star.speed * 2}s`,
                 }}
               />
             ))}
           </div>
 
-          <div 
-            className={`absolute z-20 ${isHit ? 'flickering' : ''}`}
-            style={{
-              left: '15%',
-              top: `${ufoY}%`,
-              transform: 'translate(-50%, -50%)',
-              transition: 'top 0.15s ease-out'
-            }}
-          >
-            <svg width="100" height="60" viewBox="0 0 140 80">
-              <defs>
-                <linearGradient id="saucerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#9ca3af" />
-                  <stop offset="50%" stopColor="#6b7280" />
-                  <stop offset="100%" stopColor="#4b5563" />
-                </linearGradient>
-                <radialGradient id="domeGrad" cx="50%" cy="40%">
-                  <stop offset="0%" stopColor="#bfdbfe" stopOpacity="0.9" />
-                  <stop offset="60%" stopColor="#60a5fa" stopOpacity="0.7" />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.85" />
-                </radialGradient>
-              </defs>
+          <div className="relative z-10 flex flex-col items-center justify-center flex-1">
+            <div className="text-center mb-8">
+              <div className="mb-6">
+                <div className="inline-block">
+                  <div className="w-16 h-16 border-4 border-purple-400/20 border-t-cyan-400 rounded-full animate-spin" />
+                </div>
+              </div>
+              <div className="flex items-center justify-center space-x-2 mb-6">
+                <span className="text-xl font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+                  Finding your match
+                </span>
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full loading-dot" />
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full loading-dot" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-pink-400 rounded-full loading-dot" style={{ animationDelay: '0.4s' }} />
+                </div>
+              </div>
               
-              <ellipse cx="70" cy="50" rx="60" ry="18" fill="url(#saucerGrad)" />
-              <ellipse cx="70" cy="47" rx="58" ry="15" fill="#d1d5db" opacity="0.3" />
-              <ellipse cx="70" cy="38" rx="28" ry="20" fill="url(#domeGrad)" />
+              <button
+                onClick={() => setGameStarted(true)}
+                className="px-8 py-4 bg-gradient-to-r from-green-500 to-cyan-500 text-white text-xl font-bold rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all transform hover:scale-105"
+              >
+                🎮 Play Game While You Wait!
+              </button>
               
-              <ellipse cx="70" cy="38" rx="8" ry="10" fill="#22c55e" />
-              <ellipse cx="67" cy="36" rx="2.5" ry="3" fill="#000" />
-              <ellipse cx="73" cy="36" rx="2.5" ry="3" fill="#000" />
-              
-              <ellipse cx="70" cy="35" rx="20" ry="14" fill="#e0f2fe" opacity="0.5" />
-              <ellipse cx="70" cy="53" rx="60" ry="8" fill="#374151" opacity="0.5" />
-              
-              <circle cx="30" cy="52" r="4" fill="#ef4444" opacity="0.9" />
-              <circle cx="50" cy="54" r="4" fill="#eab308" opacity="0.9" />
-              <circle cx="70" cy="55" r="4" fill="#22c55e" opacity="0.9" />
-              <circle cx="90" cy="54" r="4" fill="#3b82f6" opacity="0.9" />
-              <circle cx="110" cy="52" r="4" fill="#a855f7" opacity="0.9" />
-            </svg>
+              <p className="text-purple-300/60 text-sm mt-4">
+                Shoot missiles and collect coins!
+              </p>
+            </div>
+
+            <div className="text-center mt-8">
+              <Link href="/" className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors">
+                ← Back to home
+              </Link>
+            </div>
           </div>
+        </>
+      )}
 
-          {bullets.map(bullet => (
-            <div
-              key={bullet.id}
-              className="absolute w-3 h-1 bg-yellow-400 rounded-full z-15"
-              style={{
-                left: `${bullet.x}%`,
-                top: `${bullet.y}%`,
-                boxShadow: '0 0 10px #fbbf24'
-              }}
-            />
-          ))}
+      {(status === 'waiting' || status === 'pending') && gameStarted && (
+        <>
+          {/* Game Screen Area */}
+          <div className="flex-1 relative" style={{ height: 'calc(100vh - 180px)' }}>
+            <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
+              {stars.map((star, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full bg-white moving-star"
+                  style={{
+                    left: `${star.x}%`,
+                    top: `${star.y}%`,
+                    width: `${star.size}px`,
+                    height: `${star.size}px`,
+                    opacity: star.opacity,
+                    animationDuration: `${star.speed * 2}s`,
+                  }}
+                />
+              ))}
+            </div>
 
-          {enemies.map(enemy => (
-            <div
-              key={enemy.id}
-              className="absolute z-15"
+            <div className="absolute top-6 right-6 z-30 text-2xl font-bold text-cyan-400 bg-black/50 px-4 py-2 rounded-lg">
+              💰 {score}
+            </div>
+
+            <div 
+              className={`absolute z-20 ${isHit ? 'flickering' : ''}`}
               style={{
-                left: `${enemy.x}%`,
-                top: `${enemy.y}%`,
-                transform: 'translate(-50%, -50%)'
+                left: '15%',
+                top: `${ufoY}%`,
+                transform: 'translate(-50%, -50%)',
+                transition: 'top 0.15s ease-out'
               }}
             >
-              {enemy.type === 'spaceship1' ? (
-                <svg width="60" height="40" viewBox="0 0 60 40">
-                  <path d="M 10 20 L 50 10 L 55 20 L 50 30 L 10 20 Z" fill="#dc2626" />
-                  <path d="M 10 20 L 50 12 L 54 20 L 50 28 L 10 20 Z" fill="#ef4444" />
-                  <ellipse cx="15" cy="20" rx="8" ry="6" fill="#7c2d12" />
-                  <circle cx="45" cy="20" r="3" fill="#fbbf24">
-                    <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
-                  </circle>
-                  <path d="M 50 15 L 52 10 L 54 15" fill="#dc2626" />
-                  <path d="M 50 25 L 52 30 L 54 25" fill="#dc2626" />
-                </svg>
-              ) : enemy.type === 'spaceship2' ? (
-                <svg width="60" height="40" viewBox="0 0 60 40">
-                  <path d="M 10 20 L 48 12 L 55 20 L 48 28 L 10 20 Z" fill="#7c3aed" />
-                  <path d="M 10 20 L 48 14 L 53 20 L 48 26 L 10 20 Z" fill="#8b5cf6" />
-                  <rect x="12" y="17" width="6" height="6" fill="#581c87" />
-                  <circle cx="43" cy="20" r="3" fill="#22d3ee">
-                    <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" />
-                  </circle>
-                  <path d="M 48 12 L 50 8 L 52 12" fill="#7c3aed" />
-                  <path d="M 48 28 L 50 32 L 52 28" fill="#7c3aed" />
-                </svg>
-              ) : enemy.type === 'spaceship3' ? (
-                <svg width="60" height="40" viewBox="0 0 60 40">
-                  <ellipse cx="30" cy="20" rx="25" ry="10" fill="#047857" />
-                  <ellipse cx="30" cy="19" rx="24" ry="9" fill="#059669" />
-                  <ellipse cx="32" cy="19" rx="22" ry="8" fill="#10b981" />
-                  <ellipse cx="20" cy="20" rx="8" ry="5" fill="#065f46" />
-                  <circle cx="40" cy="20" r="3" fill="#fbbf24">
-                    <animate attributeName="opacity" values="0.5;1;0.5" dur="0.9s" repeatCount="indefinite" />
-                  </circle>
-                  <ellipse cx="28" cy="14" rx="3" ry="2" fill="#34d399" />
-                  <ellipse cx="28" cy="26" rx="3" ry="2" fill="#34d399" />
-                </svg>
-              ) : (
-                <svg width="50" height="50" viewBox="0 0 50 50">
-                  <circle cx="25" cy="25" r="18" fill="#78716c" />
-                  <circle cx="18" cy="18" r="5" fill="#57534e" />
-                  <circle cx="32" cy="28" r="6" fill="#57534e" />
-                  <circle cx="20" cy="32" r="4" fill="#57534e" />
-                </svg>
-              )}
+              <svg width="100" height="60" viewBox="0 0 140 80">
+                <defs>
+                  <linearGradient id="saucerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#9ca3af" />
+                    <stop offset="50%" stopColor="#6b7280" />
+                    <stop offset="100%" stopColor="#4b5563" />
+                  </linearGradient>
+                  <radialGradient id="domeGrad" cx="50%" cy="40%">
+                    <stop offset="0%" stopColor="#bfdbfe" stopOpacity="0.9" />
+                    <stop offset="60%" stopColor="#60a5fa" stopOpacity="0.7" />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.85" />
+                  </radialGradient>
+                </defs>
+                
+                <ellipse cx="70" cy="50" rx="60" ry="18" fill="url(#saucerGrad)" />
+                <ellipse cx="70" cy="47" rx="58" ry="15" fill="#d1d5db" opacity="0.3" />
+                <ellipse cx="70" cy="38" rx="28" ry="20" fill="url(#domeGrad)" />
+                
+                <ellipse cx="70" cy="38" rx="8" ry="10" fill="#22c55e" />
+                <ellipse cx="67" cy="36" rx="2.5" ry="3" fill="#000" />
+                <ellipse cx="73" cy="36" rx="2.5" ry="3" fill="#000" />
+                
+                <ellipse cx="70" cy="35" rx="20" ry="14" fill="#e0f2fe" opacity="0.5" />
+                <ellipse cx="70" cy="53" rx="60" ry="8" fill="#374151" opacity="0.5" />
+                
+                <circle cx="30" cy="52" r="4" fill="#ef4444" opacity="0.9" />
+                <circle cx="50" cy="54" r="4" fill="#eab308" opacity="0.9" />
+                <circle cx="70" cy="55" r="4" fill="#22c55e" opacity="0.9" />
+                <circle cx="90" cy="54" r="4" fill="#3b82f6" opacity="0.9" />
+                <circle cx="110" cy="52" r="4" fill="#a855f7" opacity="0.9" />
+              </svg>
             </div>
-          ))}
 
-          {explosions.map(explosion => {
-            const scale = 1 + (explosion.frame * 0.1);
-            const opacity = 1 - (explosion.frame / 15);
-            return (
+            {bullets.map(bullet => (
               <div
-                key={explosion.id}
-                className="absolute z-25"
+                key={bullet.id}
+                className="absolute w-4 h-2 bg-yellow-400 rounded-full z-15"
                 style={{
-                  left: `${explosion.x}%`,
-                  top: `${explosion.y}%`,
-                  transform: 'translate(-50%, -50%)',
-                  opacity: opacity
+                  left: `${bullet.x}%`,
+                  top: `${bullet.y}%`,
+                  boxShadow: '0 0 15px #fbbf24'
+                }}
+              />
+            ))}
+
+            {coins.map(coin => (
+              <div
+                key={coin.id}
+                className="absolute z-15"
+                style={{
+                  left: `${coin.x}%`,
+                  top: `${coin.y}%`,
+                  transform: `translate(-50%, -50%) rotateY(${coin.rotation}deg)`
                 }}
               >
-                <svg width={60 * scale} height={60 * scale} viewBox="0 0 60 60">
-                  <circle cx="30" cy="30" r="25" fill="#ff4500" opacity="0.8" />
-                  <circle cx="30" cy="30" r="20" fill="#ff6347" opacity="0.9" />
-                  <circle cx="30" cy="30" r="15" fill="#ffa500" />
-                  <circle cx="30" cy="30" r="10" fill="#ffff00" />
-                  <circle cx="30" cy="30" r="5" fill="#ffffff" />
-                  <circle cx="20" cy="20" r="4" fill="#ff4500" opacity="0.7" />
-                  <circle cx="40" cy="25" r="3" fill="#ffa500" opacity="0.8" />
-                  <circle cx="25" cy="40" r="3" fill="#ff6347" opacity="0.6" />
-                  <circle cx="35" cy="38" r="4" fill="#ff4500" opacity="0.7" />
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                  <defs>
+                    <radialGradient id="coinGrad">
+                      <stop offset="0%" stopColor="#fbbf24" />
+                      <stop offset="50%" stopColor="#f59e0b" />
+                      <stop offset="100%" stopColor="#d97706" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="20" cy="20" r="15" fill="url(#coinGrad)" stroke="#92400e" strokeWidth="2" />
+                  <text x="20" y="25" fontSize="16" fontWeight="bold" fill="#92400e" textAnchor="middle">$</text>
                 </svg>
               </div>
-            );
-          })}
+            ))}
 
-          <div className="fixed top-6 right-6 z-30 text-lg font-bold text-cyan-400">
-            Score: {score}
-          </div>
-
-          <div className="fixed top-24 left-0 right-0 flex items-center justify-center z-30">
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
-                Finding your match
-              </span>
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-purple-400 rounded-full loading-dot" />
-                <div className="w-2 h-2 bg-cyan-400 rounded-full loading-dot" style={{ animationDelay: '0.2s' }} />
-                <div className="w-2 h-2 bg-pink-400 rounded-full loading-dot" style={{ animationDelay: '0.4s' }} />
+            {enemies.map(enemy => (
+              <div
+                key={enemy.id}
+                className="absolute z-15"
+                style={{
+                  left: `${enemy.x}%`,
+                  top: `${enemy.y}%`,
+                  transform: 'translate(-50%, -50%)'
+                }}
+              >
+                {enemy.type === 'missile1' ? (
+                  <svg width="50" height="20" viewBox="0 0 50 20">
+                    <defs>
+                      <linearGradient id="missile1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#991b1b" />
+                        <stop offset="100%" stopColor="#dc2626" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 5 10 L 40 4 L 48 10 L 40 16 Z" fill="url(#missile1Grad)" />
+                    <circle cx="42" cy="10" r="2" fill="#fbbf24">
+                      <animate attributeName="opacity" values="0.5;1;0.5" dur="0.5s" repeatCount="indefinite" />
+                    </circle>
+                    <polygon points="2,10 8,7 8,13" fill="#7f1d1d" />
+                  </svg>
+                ) : enemy.type === 'missile2' ? (
+                  <svg width="50" height="20" viewBox="0 0 50 20">
+                    <defs>
+                      <linearGradient id="missile2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#581c87" />
+                        <stop offset="100%" stopColor="#7c3aed" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 5 10 L 40 5 L 48 10 L 40 15 Z" fill="url(#missile2Grad)" />
+                    <circle cx="42" cy="10" r="2" fill="#22d3ee">
+                      <animate attributeName="opacity" values="0.5;1;0.5" dur="0.6s" repeatCount="indefinite" />
+                    </circle>
+                    <polygon points="2,10 8,8 8,12" fill="#4c1d95" />
+                  </svg>
+                ) : enemy.type === 'missile3' ? (
+                  <svg width="50" height="20" viewBox="0 0 50 20">
+                    <defs>
+                      <linearGradient id="missile3Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#065f46" />
+                        <stop offset="100%" stopColor="#059669" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 5 10 L 40 6 L 48 10 L 40 14 Z" fill="url(#missile3Grad)" />
+                    <circle cx="42" cy="10" r="2" fill="#fbbf24">
+                      <animate attributeName="opacity" values="0.5;1;0.5" dur="0.7s" repeatCount="indefinite" />
+                    </circle>
+                    <polygon points="2,10 8,8.5 8,11.5" fill="#064e3b" />
+                  </svg>
+                ) : (
+                  <svg width="40" height="40" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="16" fill="#78716c" />
+                    <circle cx="15" cy="15" r="4" fill="#57534e" />
+                    <circle cx="26" cy="22" r="5" fill="#57534e" />
+                    <circle cx="17" cy="26" r="3" fill="#57534e" />
+                  </svg>
+                )}
               </div>
+            ))}
+
+            {explosions.map(explosion => {
+              const scale = 1 + (explosion.frame * 0.1);
+              const opacity = 1 - (explosion.frame / 15);
+              return (
+                <div
+                  key={explosion.id}
+                  className="absolute z-25"
+                  style={{
+                    left: `${explosion.x}%`,
+                    top: `${explosion.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    opacity: opacity
+                  }}
+                >
+                  <svg width={60 * scale} height={60 * scale} viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="25" fill="#ff4500" opacity="0.8" />
+                    <circle cx="30" cy="30" r="20" fill="#ff6347" opacity="0.9" />
+                    <circle cx="30" cy="30" r="15" fill="#ffa500" />
+                    <circle cx="30" cy="30" r="10" fill="#ffff00" />
+                    <circle cx="30" cy="30" r="5" fill="#ffffff" />
+                    <circle cx="20" cy="20" r="4" fill="#ff4500" opacity="0.7" />
+                    <circle cx="40" cy="25" r="3" fill="#ffa500" opacity="0.8" />
+                    <circle cx="25" cy="40" r="3" fill="#ff6347" opacity="0.6" />
+                    <circle cx="35" cy="38" r="4" fill="#ff4500" opacity="0.7" />
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Controller Area */}
+          <div className="h-[180px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-8 px-8">
+            <div className="flex gap-3">
+              <button
+                onClick={moveUp}
+                className="w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
+              >
+                ▲
+              </button>
+              <button
+                onClick={moveDown}
+                className="w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
+              >
+                ▼
+              </button>
             </div>
-          </div>
 
-          <div className="fixed bottom-8 left-8 z-30 flex flex-col gap-2">
-            <button
-              onClick={moveUp}
-              className="w-12 h-12 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all"
-            >
-              ▲
-            </button>
-            <button
-              onClick={moveDown}
-              className="w-12 h-12 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all"
-            >
-              ▼
-            </button>
-          </div>
-
-          <div className="fixed bottom-8 right-8 z-30">
             <button
               onClick={shoot}
-              className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full text-white text-lg font-bold active:scale-95 transition-all shadow-lg"
+              className="w-24 h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-xl font-bold active:scale-95 transition-all shadow-2xl"
             >
               SHOOT
             </button>
-          </div>
-
-          <div className="fixed bottom-8 left-0 right-0 text-center z-30">
-            <Link href="/" className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors">
-              ← Back to home
-            </Link>
+            
+            <div className="text-center">
+              <Link href="/" className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors">
+                ← Exit Game
+              </Link>
+            </div>
           </div>
         </>
       )}
@@ -702,8 +866,8 @@ export default function ReceivePage() {
                   <p className="text-green-200/60 text-sm mt-1">
                     A resonant frequency has reached you
                   </p>
-                  <p className="text-cyan-400 text-sm mt-2">
-                    Final Score: {score}
+                  <p className="text-cyan-400 text-lg mt-2 font-bold">
+                    Final Score: {score} 🏆
                   </p>
                 </div>
 
