@@ -379,15 +379,21 @@ export default function ReceivePage() {
     }
   };
 
-  const moveUp = () => {
+  const moveUp = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setUfoY(prev => Math.max(10, prev - 5));
   };
 
-  const moveDown = () => {
+  const moveDown = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setUfoY(prev => Math.min(GAME_AREA_BOTTOM, prev + 5));
   };
 
-  const shoot = () => {
+  const shoot = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setBullets(prev => [...prev, {
       id: nextBulletId.current++,
       x: 20,
@@ -1017,14 +1023,16 @@ export default function ReceivePage() {
           <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
             <div className="flex gap-3">
               <button
-                onClick={moveUp}
-                className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
+                onMouseDown={moveUp}
+                onTouchStart={moveUp}
+                className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg touch-none"
               >
                 ▲
               </button>
               <button
-                onClick={moveDown}
-                className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
+                onMouseDown={moveDown}
+                onTouchStart={moveDown}
+                className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg touch-none"
               >
                 ▼
               </button>
@@ -1041,8 +1049,9 @@ export default function ReceivePage() {
             </div>
             
             <button
-              onClick={shoot}
-              className="w-20 h-20 md:w-24 md:h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-base md:text-lg font-bold active:scale-95 transition-all shadow-2xl"
+              onMouseDown={shoot}
+              onTouchStart={shoot}
+              className="w-20 h-20 md:w-24 md:h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-base md:text-lg font-bold active:scale-95 transition-all shadow-2xl touch-none"
             >
               SHOOT
             </button>
@@ -1050,7 +1059,6 @@ export default function ReceivePage() {
         </>
       )}
 
-      {/* Keeping rest of component the same - game over, received message, etc... */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
