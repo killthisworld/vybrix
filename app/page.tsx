@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 
-const STAR_COUNT = 50;
+const STAR_COUNT = 150; // Increased from 50
 
 interface Star {
   x: number;
@@ -12,7 +12,7 @@ interface Star {
   size: number;
   opacity: number;
   speed: number;
-  startX: number; // Initial X position
+  startX: number;
 }
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
       size: Math.random() * 1.5 + 0.5,
       opacity: Math.random() * 0.5 + 0.5,
       speed: Math.random() * 2 + 1,
-      startX: Math.random() * 200 - 100, // Start from -100% to 100%
+      startX: Math.random() * 200 - 100,
     }));
     setStars(newStars);
 

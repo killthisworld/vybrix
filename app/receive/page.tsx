@@ -133,7 +133,7 @@ export default function ReceivePage() {
   const animateLanding = () => {
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 1; // Faster animation (was 0.5)
+      progress += 1;
       setLandingProgress(progress);
       if (progress >= 100) {
         clearInterval(interval);
@@ -397,6 +397,9 @@ export default function ReceivePage() {
   if (showLanding) {
     const ufoLandingY = landingProgress * 0.65;
     const moonY = 70;
+    // Landing legs extend when progress > 60%
+    const legsExtended = landingProgress > 60;
+    const legExtension = Math.min((landingProgress - 60) / 40, 1); // 0 to 1
     
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
@@ -488,7 +491,7 @@ export default function ReceivePage() {
             </svg>
           </div>
 
-          {/* UFO */}
+          {/* UFO with landing legs */}
           <div 
             className="absolute"
             style={{
@@ -497,7 +500,7 @@ export default function ReceivePage() {
               transform: 'translate(-50%, -50%)'
             }}
           >
-            <svg width="140" height="80" viewBox="0 0 140 80">
+            <svg width="140" height="100" viewBox="0 0 140 100">
               <defs>
                 <linearGradient id="saucerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#9ca3af" />
@@ -510,6 +513,75 @@ export default function ReceivePage() {
                   <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.85" />
                 </radialGradient>
               </defs>
+              
+              {/* Landing legs - extend when landing */}
+              {legsExtended && (
+                <>
+                  {/* Left leg */}
+                  <line 
+                    x1="30" 
+                    y1="55" 
+                    x2={30 - (15 * legExtension)} 
+                    y2={55 + (25 * legExtension)} 
+                    stroke="#6b7280" 
+                    strokeWidth="3"
+                  />
+                  <circle 
+                    cx={30 - (15 * legExtension)} 
+                    cy={55 + (25 * legExtension)} 
+                    r="4" 
+                    fill="#4b5563"
+                  />
+                  
+                  {/* Center-left leg */}
+                  <line 
+                    x1="50" 
+                    y1="58" 
+                    x2={50 - (8 * legExtension)} 
+                    y2={58 + (28 * legExtension)} 
+                    stroke="#6b7280" 
+                    strokeWidth="3"
+                  />
+                  <circle 
+                    cx={50 - (8 * legExtension)} 
+                    cy={58 + (28 * legExtension)} 
+                    r="4" 
+                    fill="#4b5563"
+                  />
+                  
+                  {/* Center-right leg */}
+                  <line 
+                    x1="90" 
+                    y1="58" 
+                    x2={90 + (8 * legExtension)} 
+                    y2={58 + (28 * legExtension)} 
+                    stroke="#6b7280" 
+                    strokeWidth="3"
+                  />
+                  <circle 
+                    cx={90 + (8 * legExtension)} 
+                    cy={58 + (28 * legExtension)} 
+                    r="4" 
+                    fill="#4b5563"
+                  />
+                  
+                  {/* Right leg */}
+                  <line 
+                    x1="110" 
+                    y1="55" 
+                    x2={110 + (15 * legExtension)} 
+                    y2={55 + (25 * legExtension)} 
+                    stroke="#6b7280" 
+                    strokeWidth="3"
+                  />
+                  <circle 
+                    cx={110 + (15 * legExtension)} 
+                    cy={55 + (25 * legExtension)} 
+                    r="4" 
+                    fill="#4b5563"
+                  />
+                </>
+              )}
               
               <ellipse cx="70" cy="50" rx="60" ry="18" fill="url(#saucerGrad)" />
               <ellipse cx="70" cy="47" rx="58" ry="15" fill="#d1d5db" opacity="0.3" />
@@ -532,7 +604,7 @@ export default function ReceivePage() {
         </div>
 
         <div className="fixed top-12 left-0 right-0 text-center z-30">
-          <h2 className="text-4xl md:text-5xl font-bold arcade-flash bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+          <h2 className="text-2xl md:text-3xl font-bold arcade-flash bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
             MESSAGE RECEIVED!
           </h2>
         </div>
