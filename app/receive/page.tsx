@@ -78,12 +78,6 @@ export default function ReceivePage() {
   const nextBulletId = useRef(0);
   const nextExplosionId = useRef(0);
   const nextCoinId = useRef(0);
-  
-  // Audio refs
-  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
-  const shootSoundRef = useRef<HTMLAudioElement | null>(null);
-  const explosionSoundRef = useRef<HTMLAudioElement | null>(null);
-  const coinSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const newStars = Array.from({ length: STAR_COUNT }, () => ({
@@ -94,28 +88,6 @@ export default function ReceivePage() {
       speed: Math.random() * 3 + 2,
     }));
     setStars(newStars);
-    
-    // Initialize audio with fallback sounds
-    if (typeof window !== 'undefined') {
-      // Using data URIs for simple sounds to ensure they work
-      bgMusicRef.current = new Audio();
-      bgMusicRef.current.loop = true;
-      bgMusicRef.current.volume = 0.3;
-      // Fallback to a simple tone if external audio fails
-      bgMusicRef.current.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGH0fPTgjMGHm7A7+OZUQ8PVqnn77BfGAg+ltryxHMpBSp+zPLaizsIGGS57OihUhELTKXh8bllHAU2jdXzzn0vBSh1xu/glkULEmCz6+2mVBkKQ5zd8r5xIwYug8rx14Y5BxtoufDopVYSC0qj4fK8cSQGMYvU8tGAMQYebsLv45lSDg9Vqejv';
-      
-      shootSoundRef.current = new Audio();
-      shootSoundRef.current.volume = 0.5;
-      shootSoundRef.current.src = 'data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4AAACB';
-      
-      explosionSoundRef.current = new Audio();
-      explosionSoundRef.current.volume = 0.6;
-      explosionSoundRef.current.src = 'data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4AAACB';
-      
-      coinSoundRef.current = new Audio();
-      coinSoundRef.current.volume = 0.7;
-      coinSoundRef.current.src = 'data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4AAACB';
-    }
   }, []);
 
   useEffect(() => {
@@ -129,15 +101,10 @@ export default function ReceivePage() {
   useEffect(() => {
     if (gameStarted) {
       startGame();
-      bgMusicRef.current?.play().catch(e => console.log('Audio play failed:', e));
     } else {
       stopGame();
-      bgMusicRef.current?.pause();
     }
-    return () => {
-      stopGame();
-      bgMusicRef.current?.pause();
-    };
+    return () => stopGame();
   }, [gameStarted]);
 
   useEffect(() => {
@@ -245,7 +212,6 @@ export default function ReceivePage() {
                   frame: 0
                 }]);
                 setScore(prev => prev + 5);
-                playSound(explosionSoundRef.current);
               }
             });
           });
@@ -256,21 +222,20 @@ export default function ReceivePage() {
         return newBullets;
       });
       
+      // Check coin collection - coins disappear when touching UFO
       setCoins(prevCoins => {
         const ufoX = 15;
-        const collected = prevCoins.filter(coin => {
+        return prevCoins.filter(coin => {
           const distance = Math.sqrt(
             Math.pow(ufoX - coin.x, 2) + Math.pow(ufoY - coin.y, 2)
           );
           
-          if (distance < 6) {
+          if (distance < 8) {
             setScore(prev => prev + 10);
-            playSound(coinSoundRef.current);
-            return false;
+            return false; // Remove coin
           }
           return true;
         });
-        return collected;
       });
 
       setEnemies(prevEnemies => {
@@ -290,7 +255,6 @@ export default function ReceivePage() {
               y: enemy.y,
               frame: 0
             }]);
-            playSound(explosionSoundRef.current);
             return false;
           }
           return true;
@@ -323,13 +287,6 @@ export default function ReceivePage() {
     }
   };
 
-  const playSound = (audio: HTMLAudioElement | null) => {
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(e => console.log('Sound play failed:', e));
-    }
-  };
-
   const moveUp = () => {
     setUfoY(prev => Math.max(10, prev - 5));
   };
@@ -344,7 +301,6 @@ export default function ReceivePage() {
       x: 20,
       y: ufoY
     }]);
-    playSound(shootSoundRef.current);
   };
 
   const fetchMessage = async () => {
@@ -624,8 +580,8 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && gameStarted && (
         <>
-          {/* Game Screen Area - adjusted height */}
-          <div className="flex-1 relative overflow-hidden">
+          {/* Game Screen Area - shortened */}
+          <div style={{ height: 'calc(100vh - 120px)' }} className="relative overflow-hidden">
             <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
               {stars.map((star, i) => (
                 <div
@@ -643,8 +599,8 @@ export default function ReceivePage() {
               ))}
             </div>
 
-            <div className="absolute top-6 right-6 z-30 text-2xl font-bold text-cyan-400 bg-black/50 px-4 py-2 rounded-lg">
-              💰 {score}
+            <div className="absolute top-4 right-4 z-30 text-xl font-bold text-cyan-400 bg-black/50 px-3 py-1 rounded-lg">
+              Score: {score}
             </div>
 
             <div 
@@ -778,20 +734,11 @@ export default function ReceivePage() {
                     <polygon points="2,10 8,8.5 8,11.5" fill="#064e3b" />
                   </svg>
                 ) : (
-                  <svg width="45" height="45" viewBox="0 0 45 45">
-                    <defs>
-                      <radialGradient id="rockGrad">
-                        <stop offset="0%" stopColor="#78716c" />
-                        <stop offset="50%" stopColor="#57534e" />
-                        <stop offset="100%" stopColor="#44403c" />
-                      </radialGradient>
-                    </defs>
-                    {/* Irregular rock shape */}
-                    <path d="M 22 5 L 35 12 L 40 25 L 32 38 L 15 40 L 5 28 L 8 15 Z" fill="url(#rockGradient)" />
-                    <ellipse cx="18" cy="16" rx="5" ry="4" fill="#44403c" opacity="0.7" />
-                    <ellipse cx="28" cy="24" rx="6" ry="5" fill="#292524" opacity="0.6" />
-                    <ellipse cx="20" cy="30" rx="4" ry="3" fill="#292524" opacity="0.5" />
-                    <path d="M 22 5 L 35 12 L 30 18 L 18 10 Z" fill="#a8a29e" opacity="0.3" />
+                  <svg width="40" height="40" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="16" fill="#78716c" />
+                    <circle cx="15" cy="15" r="4" fill="#57534e" />
+                    <circle cx="26" cy="22" r="5" fill="#57534e" />
+                    <circle cx="17" cy="26" r="3" fill="#57534e" />
                   </svg>
                 )}
               </div>
@@ -827,18 +774,18 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area - fixed height */}
-          <div className="h-[140px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-12 px-8 flex-shrink-0">
+          {/* Controller Area - reduced height */}
+          <div className="h-[120px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-12 px-8 flex-shrink-0">
             <div className="flex gap-3">
               <button
                 onClick={moveUp}
-                className="w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
+                className="w-14 h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all shadow-lg"
               >
                 ▲
               </button>
               <button
                 onClick={moveDown}
-                className="w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
+                className="w-14 h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all shadow-lg"
               >
                 ▼
               </button>
@@ -848,7 +795,7 @@ export default function ReceivePage() {
               <Link 
                 href="/" 
                 onClick={() => setGameStarted(false)}
-                className="text-purple-300/70 hover:text-purple-300 text-sm transition-colors block mb-1"
+                className="text-purple-300/70 hover:text-purple-300 text-sm transition-colors block"
               >
                 ← Exit Game
               </Link>
@@ -856,7 +803,7 @@ export default function ReceivePage() {
             
             <button
               onClick={shoot}
-              className="w-24 h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-lg font-bold active:scale-95 transition-all shadow-2xl"
+              className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full text-white text-base font-bold active:scale-95 transition-all shadow-2xl"
             >
               SHOOT
             </button>
