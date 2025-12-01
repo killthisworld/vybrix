@@ -79,6 +79,12 @@ export default function ReceivePage() {
   const nextBulletId = useRef(0);
   const nextExplosionId = useRef(0);
   const nextCoinId = useRef(0);
+  const ufoYRef = useRef(40);
+
+  // Keep ufoYRef in sync with ufoY
+  useEffect(() => {
+    ufoYRef.current = ufoY;
+  }, [ufoY]);
 
   useEffect(() => {
     const newStars = Array.from({ length: STAR_COUNT }, () => ({
@@ -171,7 +177,7 @@ export default function ReceivePage() {
     }, 3000);
 
     const gameLoop = () => {
-      const ufoX = 15; // UFO position constant
+      const ufoX = 15; // UFO X position constant
       
       setEnemies(prev => prev
         .map(enemy => ({ ...enemy, x: enemy.x - enemy.speed }))
@@ -183,24 +189,37 @@ export default function ReceivePage() {
         .filter(bullet => bullet.x < 105)
       );
       
+      // Move coins and check for UFO collision using ref
       setCoins(prev => {
-        const currentUfoY = ufoY;
-        return prev
-          .map(coin => ({ ...coin, x: coin.x - 0.4, rotation: coin.rotation + 5 }))
-          .filter(coin => {
-            if (coin.x < -10) return false;
-            
-            // Check collision with UFO for coin absorption
-            const distance = Math.sqrt(
-              Math.pow(ufoX - coin.x, 2) + Math.pow(currentUfoY - coin.y, 2)
-            );
-            
-            if (distance < 8) {
-              setScore(prev => prev + 10);
-              return false; // Remove coin
-            }
-            return true; // Keep coin
-          });
+        const currentUfoY = ufoYRef.current;
+        const remaining: Coin[] = [];
+        
+        prev.forEach(coin => {
+          const newCoin = { 
+            ...coin, 
+            x: coin.x - 0.4, 
+            rotation: coin.rotation + 5 
+          };
+          
+          // Remove if off screen
+          if (newCoin.x < -10) {
+            return;
+          }
+          
+          // Check collision with UFO - larger radius for easier collection
+          const distance = Math.sqrt(
+            Math.pow(ufoX - newCoin.x, 2) + Math.pow(currentUfoY - newCoin.y, 2)
+          );
+          
+          if (distance < 12) { // Increased from 8 to 12
+            setScore(s => s + 10);
+            // Don't add to remaining - coin is collected
+          } else {
+            remaining.push(newCoin);
+          }
+        });
+        
+        return remaining;
       });
 
       setExplosions(prev => prev
@@ -241,9 +260,9 @@ export default function ReceivePage() {
         return newBullets;
       });
 
-      // Enemy-UFO collision (only when they actually hit)
+      // Enemy-UFO collision using ref
       setEnemies(prevEnemies => {
-        const currentUfoY = ufoY;
+        const currentUfoY = ufoYRef.current;
         let hit = false;
         
         const remainingEnemies = prevEnemies.filter(enemy => {
@@ -251,7 +270,6 @@ export default function ReceivePage() {
             Math.pow(ufoX - enemy.x, 2) + Math.pow(currentUfoY - enemy.y, 2)
           );
           
-          // Only hit if VERY close (within 6 units instead of 8)
           if (distance < 6) {
             hit = true;
             setExplosions(prev => [...prev, {
@@ -909,10 +927,10 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area - repositioned buttons */}
+          {/* Controller Area - buttons side by side on left, shoot on right */}
           <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
-            {/* Left side - Up/Down buttons */}
-            <div className="flex flex-col gap-2">
+            {/* Left side - Up/Down buttons SIDE BY SIDE */}
+            <div className="flex gap-3">
               <button
                 onClick={moveUp}
                 className="w-16 h-16 md:w-18 md:h-18 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-2xl font-bold active:scale-95 transition-all shadow-lg"
