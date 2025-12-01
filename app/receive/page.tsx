@@ -132,11 +132,11 @@ export default function ReceivePage() {
   const animateLanding = () => {
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 2;
+      progress += 0.5; // Slower animation (was 2)
       setLandingProgress(progress);
       if (progress >= 100) {
         clearInterval(interval);
-        setTimeout(() => setShowLanding(false), 500);
+        setTimeout(() => setShowLanding(false), 1500); // Pause on planet
       }
     }, 30);
   };
@@ -394,8 +394,10 @@ export default function ReceivePage() {
   }
 
   if (showLanding) {
-    const ufoLandingY = landingProgress;
-    const planetY = 70 + (30 - landingProgress * 0.3);
+    // UFO starts at top (0%) and lands at 65%
+    const ufoLandingY = landingProgress * 0.65;
+    // Earth stays at bottom (70%)
+    const earthY = 70;
     
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
@@ -427,28 +429,41 @@ export default function ReceivePage() {
         `}</style>
 
         <div className="relative z-10 flex items-center justify-center min-h-screen">
+          {/* Earth - stays at bottom */}
           <div 
             className="absolute"
             style={{
               left: '50%',
-              top: `${planetY}%`,
+              top: `${earthY}%`,
               transform: 'translate(-50%, -50%)'
             }}
           >
             <svg width="300" height="300" viewBox="0 0 300 300">
               <defs>
-                <radialGradient id="planetGrad">
-                  <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="50%" stopColor="#059669" />
-                  <stop offset="100%" stopColor="#047857" />
+                <radialGradient id="earthGrad">
+                  <stop offset="0%" stopColor="#4a9eff" />
+                  <stop offset="50%" stopColor="#2563eb" />
+                  <stop offset="100%" stopColor="#1e40af" />
                 </radialGradient>
               </defs>
-              <circle cx="150" cy="150" r="140" fill="url(#planetGrad)" />
-              <ellipse cx="150" cy="140" rx="100" ry="30" fill="#047857" opacity="0.5" />
-              <ellipse cx="180" cy="160" rx="60" ry="20" fill="#047857" opacity="0.5" />
+              {/* Ocean base */}
+              <circle cx="150" cy="150" r="140" fill="url(#earthGrad)" />
+              
+              {/* Continents - green landmasses */}
+              <ellipse cx="120" cy="100" rx="45" ry="35" fill="#10b981" opacity="0.9" />
+              <ellipse cx="180" cy="120" rx="35" ry="40" fill="#059669" opacity="0.9" />
+              <ellipse cx="140" cy="170" rx="50" ry="30" fill="#047857" opacity="0.9" />
+              <ellipse cx="200" cy="180" rx="30" ry="25" fill="#10b981" opacity="0.9" />
+              <ellipse cx="100" cy="200" rx="25" ry="20" fill="#059669" opacity="0.9" />
+              
+              {/* Cloud layer */}
+              <ellipse cx="80" cy="130" rx="30" ry="15" fill="#ffffff" opacity="0.3" />
+              <ellipse cx="220" cy="150" rx="35" ry="18" fill="#ffffff" opacity="0.3" />
+              <ellipse cx="150" cy="90" rx="25" ry="12" fill="#ffffff" opacity="0.3" />
             </svg>
           </div>
 
+          {/* UFO - descends from top */}
           <div 
             className="absolute"
             style={{
@@ -611,7 +626,6 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && gameStarted && (
         <>
-          {/* Game Screen Area */}
           <div style={{ height: 'calc(100dvh - 100px)' }} className="relative overflow-hidden">
             <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
               {stars.map((star, i) => (
@@ -805,7 +819,6 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area - fixed 100px */}
           <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-4 md:gap-12 px-4 md:px-8 flex-shrink-0">
             <div className="flex gap-2 md:gap-3">
               <button

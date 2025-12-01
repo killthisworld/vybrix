@@ -11,6 +11,7 @@ interface Star {
   y: number;
   size: number;
   opacity: number;
+  speed: number;
 }
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
       y: Math.random() * 100,
       size: Math.random() * 1.5 + 0.5,
       opacity: Math.random() * 0.5 + 0.5,
+      speed: Math.random() * 2 + 1,
     }));
     setStars(newStars);
 
@@ -80,17 +82,29 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pb-16">
+      <style jsx>{`
+        @keyframes moveStarsSlow {
+          from { transform: translateX(100vw); }
+          to { transform: translateX(-100vw); }
+        }
+        .moving-star-slow {
+          animation: moveStarsSlow linear infinite;
+        }
+      `}</style>
+
+      {/* Slow moving stars background */}
       <div className="fixed inset-0">
         {stars.map((star, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full bg-white moving-star-slow"
             style={{
               left: `${star.x}%`,
               top: `${star.y}%`,
               width: `${star.size}px`,
               height: `${star.size}px`,
               opacity: star.opacity,
+              animationDuration: `${star.speed * 15}s`,
             }}
           />
         ))}
