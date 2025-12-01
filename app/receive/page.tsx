@@ -85,7 +85,7 @@ export default function ReceivePage() {
       y: Math.random() * 100,
       size: Math.random() * 2 + 0.5,
       opacity: Math.random() * 0.7 + 0.3,
-      speed: Math.random() * 3 + 2,
+      speed: Math.random() * 2 + 1, // Slower for background
     }));
     setStars(newStars);
   }, []);
@@ -222,7 +222,7 @@ export default function ReceivePage() {
         return newBullets;
       });
       
-      // Check coin collection - coins disappear when touching UFO
+      // Check coin collection - coins absorbed by UFO
       setCoins(prevCoins => {
         const ufoX = 15;
         return prevCoins.filter(coin => {
@@ -230,9 +230,10 @@ export default function ReceivePage() {
             Math.pow(ufoX - coin.x, 2) + Math.pow(ufoY - coin.y, 2)
           );
           
-          if (distance < 8) {
+          // Larger collision radius for better coin absorption
+          if (distance < 10) {
             setScore(prev => prev + 10);
-            return false; // Remove coin
+            return false;
           }
           return true;
         });
@@ -353,21 +354,33 @@ export default function ReceivePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
+        {/* Slow moving stars background */}
         <div className="fixed inset-0">
           {stars.map((star, i) => (
             <div
               key={i}
-              className="absolute rounded-full bg-white"
+              className="absolute rounded-full bg-white moving-star-slow"
               style={{
                 left: `${star.x}%`,
                 top: `${star.y}%`,
                 width: `${star.size}px`,
                 height: `${star.size}px`,
                 opacity: star.opacity,
+                animationDuration: `${star.speed * 15}s`,
               }}
             />
           ))}
         </div>
+
+        <style jsx>{`
+          @keyframes moveStarsSlow {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-100vw); }
+          }
+          .moving-star-slow {
+            animation: moveStarsSlow linear infinite;
+          }
+        `}</style>
 
         <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
           <div className="text-center">
@@ -389,21 +402,33 @@ export default function ReceivePage() {
     
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
+        {/* Slow moving stars background */}
         <div className="fixed inset-0">
           {stars.map((star, i) => (
             <div
               key={i}
-              className="absolute rounded-full bg-white"
+              className="absolute rounded-full bg-white moving-star-slow"
               style={{
                 left: `${star.x}%`,
                 top: `${star.y}%`,
                 width: `${star.size}px`,
                 height: `${star.size}px`,
                 opacity: star.opacity,
+                animationDuration: `${star.speed * 15}s`,
               }}
             />
           ))}
         </div>
+
+        <style jsx>{`
+          @keyframes moveStarsSlow {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-100vw); }
+          }
+          .moving-star-slow {
+            animation: moveStarsSlow linear infinite;
+          }
+        `}</style>
 
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div 
@@ -487,6 +512,11 @@ export default function ReceivePage() {
           to { transform: translateX(-100vw); }
         }
         
+        @keyframes moveStarsSlow {
+          from { transform: translateX(100vw); }
+          to { transform: translateX(-100vw); }
+        }
+        
         @keyframes flicker {
           0%, 100% { opacity: 1; }
           25% { opacity: 0.2; }
@@ -508,6 +538,10 @@ export default function ReceivePage() {
           animation: moveStars linear infinite;
         }
         
+        .moving-star-slow {
+          animation: moveStarsSlow linear infinite;
+        }
+        
         .flickering {
           animation: flicker 0.5s;
         }
@@ -523,32 +557,34 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && !gameStarted && (
         <>
+          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-white"
+                className="absolute rounded-full bg-white moving-star-slow"
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
+                  animationDuration: `${star.speed * 15}s`,
                 }}
               />
             ))}
           </div>
 
-          <div className="relative z-10 flex flex-col items-center justify-center flex-1">
-            <div className="text-center mb-8">
-              <div className="mb-6">
+          <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4">
+            <div className="text-center mb-6">
+              <div className="mb-4">
                 <div className="inline-block">
                   <div className="w-16 h-16 border-4 border-purple-400/20 border-t-cyan-400 rounded-full animate-spin" />
                 </div>
               </div>
               <div className="flex items-center justify-center space-x-2 mb-6">
-                <span className="text-xl font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
-                  Finding your match
+                <span className="text-lg md:text-xl font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+                  Scouring the ether for your match
                 </span>
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-purple-400 rounded-full loading-dot" />
@@ -559,17 +595,17 @@ export default function ReceivePage() {
               
               <button
                 onClick={() => setGameStarted(true)}
-                className="px-8 py-4 bg-gradient-to-r from-green-500 to-cyan-500 text-white text-xl font-bold rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all transform hover:scale-105"
+                className="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-green-500 to-cyan-500 text-white text-lg md:text-xl font-bold rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all transform hover:scale-105"
               >
                 🎮 Play Game While You Wait!
               </button>
               
-              <p className="text-purple-300/70 text-sm mt-4">
+              <p className="text-purple-300/70 text-xs md:text-sm mt-3">
                 Highest score gets their message shared on the leaderboard!
               </p>
             </div>
 
-            <div className="text-center mt-8">
+            <div className="text-center mt-6">
               <Link href="/" className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors">
                 ← Back to home
               </Link>
@@ -580,8 +616,8 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && gameStarted && (
         <>
-          {/* Game Screen Area - shortened */}
-          <div style={{ height: 'calc(100vh - 120px)' }} className="relative overflow-hidden">
+          {/* Game Screen Area - responsive */}
+          <div style={{ height: 'calc(100vh - 100px)' }} className="relative overflow-hidden">
             <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
               {stars.map((star, i) => (
                 <div
@@ -599,7 +635,7 @@ export default function ReceivePage() {
               ))}
             </div>
 
-            <div className="absolute top-4 right-4 z-30 text-xl font-bold text-cyan-400 bg-black/50 px-3 py-1 rounded-lg">
+            <div className="absolute top-2 right-2 md:top-4 md:right-4 z-30 text-base md:text-xl font-bold text-cyan-400 bg-black/50 px-2 py-1 md:px-3 md:py-1 rounded-lg">
               Score: {score}
             </div>
 
@@ -612,7 +648,7 @@ export default function ReceivePage() {
                 transition: 'top 0.15s ease-out'
               }}
             >
-              <svg width="100" height="60" viewBox="0 0 140 80">
+              <svg width="80" height="48" viewBox="0 0 140 80" className="md:w-[100px] md:h-[60px]">
                 <defs>
                   <linearGradient id="saucerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#9ca3af" />
@@ -648,7 +684,7 @@ export default function ReceivePage() {
             {bullets.map(bullet => (
               <div
                 key={bullet.id}
-                className="absolute w-4 h-2 bg-yellow-400 rounded-full z-15"
+                className="absolute w-3 h-1.5 md:w-4 md:h-2 bg-yellow-400 rounded-full z-15"
                 style={{
                   left: `${bullet.x}%`,
                   top: `${bullet.y}%`,
@@ -667,7 +703,7 @@ export default function ReceivePage() {
                   transform: `translate(-50%, -50%) rotateY(${coin.rotation}deg)`
                 }}
               >
-                <svg width="40" height="40" viewBox="0 0 40 40">
+                <svg width="32" height="32" viewBox="0 0 40 40" className="md:w-[40px] md:h-[40px]">
                   <defs>
                     <radialGradient id="coinGrad">
                       <stop offset="0%" stopColor="#fbbf24" />
@@ -692,7 +728,7 @@ export default function ReceivePage() {
                 }}
               >
                 {enemy.type === 'missile1' ? (
-                  <svg width="50" height="20" viewBox="0 0 50 20">
+                  <svg width="40" height="16" viewBox="0 0 50 20" className="md:w-[50px] md:h-[20px]">
                     <defs>
                       <linearGradient id="missile1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#991b1b" />
@@ -706,7 +742,7 @@ export default function ReceivePage() {
                     <polygon points="2,10 8,7 8,13" fill="#7f1d1d" />
                   </svg>
                 ) : enemy.type === 'missile2' ? (
-                  <svg width="50" height="20" viewBox="0 0 50 20">
+                  <svg width="40" height="16" viewBox="0 0 50 20" className="md:w-[50px] md:h-[20px]">
                     <defs>
                       <linearGradient id="missile2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#581c87" />
@@ -720,7 +756,7 @@ export default function ReceivePage() {
                     <polygon points="2,10 8,8 8,12" fill="#4c1d95" />
                   </svg>
                 ) : enemy.type === 'missile3' ? (
-                  <svg width="50" height="20" viewBox="0 0 50 20">
+                  <svg width="40" height="16" viewBox="0 0 50 20" className="md:w-[50px] md:h-[20px]">
                     <defs>
                       <linearGradient id="missile3Grad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#065f46" />
@@ -734,7 +770,7 @@ export default function ReceivePage() {
                     <polygon points="2,10 8,8.5 8,11.5" fill="#064e3b" />
                   </svg>
                 ) : (
-                  <svg width="40" height="40" viewBox="0 0 40 40">
+                  <svg width="32" height="32" viewBox="0 0 40 40" className="md:w-[40px] md:h-[40px]">
                     <circle cx="20" cy="20" r="16" fill="#78716c" />
                     <circle cx="15" cy="15" r="4" fill="#57534e" />
                     <circle cx="26" cy="22" r="5" fill="#57534e" />
@@ -758,7 +794,7 @@ export default function ReceivePage() {
                     opacity: opacity
                   }}
                 >
-                  <svg width={60 * scale} height={60 * scale} viewBox="0 0 60 60">
+                  <svg width={50 * scale} height={50 * scale} viewBox="0 0 60 60">
                     <circle cx="30" cy="30" r="25" fill="#ff4500" opacity="0.8" />
                     <circle cx="30" cy="30" r="20" fill="#ff6347" opacity="0.9" />
                     <circle cx="30" cy="30" r="15" fill="#ffa500" />
@@ -774,18 +810,18 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area - reduced height */}
-          <div className="h-[120px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-12 px-8 flex-shrink-0">
-            <div className="flex gap-3">
+          {/* Controller Area - responsive */}
+          <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-4 md:gap-12 px-4 md:px-8 flex-shrink-0">
+            <div className="flex gap-2 md:gap-3">
               <button
                 onClick={moveUp}
-                className="w-14 h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all shadow-lg"
+                className="w-12 h-12 md:w-14 md:h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-lg md:text-xl font-bold active:scale-95 transition-all shadow-lg"
               >
                 ▲
               </button>
               <button
                 onClick={moveDown}
-                className="w-14 h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xl font-bold active:scale-95 transition-all shadow-lg"
+                className="w-12 h-12 md:w-14 md:h-14 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-lg md:text-xl font-bold active:scale-95 transition-all shadow-lg"
               >
                 ▼
               </button>
@@ -795,15 +831,15 @@ export default function ReceivePage() {
               <Link 
                 href="/" 
                 onClick={() => setGameStarted(false)}
-                className="text-purple-300/70 hover:text-purple-300 text-sm transition-colors block"
+                className="text-purple-300/70 hover:text-purple-300 text-xs md:text-sm transition-colors block"
               >
-                ← Exit Game
+                ← Exit
               </Link>
             </div>
             
             <button
               onClick={shoot}
-              className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full text-white text-base font-bold active:scale-95 transition-all shadow-2xl"
+              className="w-16 h-16 md:w-20 md:h-20 bg-red-600 hover:bg-red-700 rounded-full text-white text-sm md:text-base font-bold active:scale-95 transition-all shadow-2xl"
             >
               SHOOT
             </button>
@@ -813,17 +849,19 @@ export default function ReceivePage() {
 
       {status === 'received' && receivedMessage && !showLanding && (
         <>
+          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-white"
+                className="absolute rounded-full bg-white moving-star-slow"
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
+                  animationDuration: `${star.speed * 15}s`,
                 }}
               />
             ))}
@@ -831,27 +869,27 @@ export default function ReceivePage() {
 
           <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
             <div className="w-full max-w-2xl">
-              <div className="border-2 border-green-400/50 rounded-lg p-8 bg-green-400/5 backdrop-blur">
+              <div className="border-2 border-green-400/50 rounded-lg p-6 md:p-8 bg-green-400/5 backdrop-blur">
                 <div className="mb-6 text-center">
-                  <h2 className="text-2xl font-semibold text-green-300">
+                  <h2 className="text-xl md:text-2xl font-semibold text-green-300">
                     ✓ Match Found
                   </h2>
-                  <p className="text-green-200/60 text-sm mt-1">
+                  <p className="text-green-200/60 text-xs md:text-sm mt-1">
                     A resonant frequency has reached you
                   </p>
-                  <p className="text-cyan-400 text-lg mt-2 font-bold">
+                  <p className="text-cyan-400 text-base md:text-lg mt-2 font-bold">
                     Final Score: {score} 🏆
                   </p>
                 </div>
 
-                <div className="bg-black/40 rounded-lg p-6 border border-purple-400/20 mb-6">
-                  <p className="text-white leading-relaxed text-lg">
+                <div className="bg-black/40 rounded-lg p-4 md:p-6 border border-purple-400/20 mb-6">
+                  <p className="text-white leading-relaxed text-base md:text-lg">
                     {receivedMessage}
                   </p>
                 </div>
 
                 <div className="text-center space-y-3">
-                  <p className="text-purple-300/60 text-sm">
+                  <p className="text-purple-300/60 text-xs md:text-sm">
                     Send another message tomorrow to receive a new match
                   </p>
                   <button
@@ -875,17 +913,19 @@ export default function ReceivePage() {
 
       {status === 'no_message_sent' && (
         <>
+          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-white"
+                className="absolute rounded-full bg-white moving-star-slow"
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
+                  animationDuration: `${star.speed * 15}s`,
                 }}
               />
             ))}
@@ -893,11 +933,11 @@ export default function ReceivePage() {
 
           <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
             <div className="w-full max-w-2xl">
-              <div className="border-2 border-purple-400/30 rounded-lg p-8 bg-purple-400/5 backdrop-blur text-center">
-                <h2 className="text-xl font-semibold text-purple-300 mb-4">
+              <div className="border-2 border-purple-400/30 rounded-lg p-6 md:p-8 bg-purple-400/5 backdrop-blur text-center">
+                <h2 className="text-lg md:text-xl font-semibold text-purple-300 mb-4">
                   Share Your Message First
                 </h2>
-                <p className="text-purple-200/60 mb-6">
+                <p className="text-purple-200/60 mb-6 text-sm md:text-base">
                   Send a message to receive one that resonates with your energy.
                 </p>
                 <Link
@@ -920,17 +960,19 @@ export default function ReceivePage() {
 
       {status === 'no_match_found' && (
         <>
+          {/* Slow moving stars background */}
           <div className="fixed inset-0">
             {stars.map((star, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-white"
+                className="absolute rounded-full bg-white moving-star-slow"
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
                   width: `${star.size}px`,
                   height: `${star.size}px`,
                   opacity: star.opacity,
+                  animationDuration: `${star.speed * 15}s`,
                 }}
               />
             ))}
@@ -938,11 +980,11 @@ export default function ReceivePage() {
 
           <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
             <div className="w-full max-w-2xl">
-              <div className="border-2 border-purple-400/30 rounded-lg p-8 bg-purple-400/5 backdrop-blur text-center">
-                <h2 className="text-xl font-semibold text-purple-300 mb-4">
+              <div className="border-2 border-purple-400/30 rounded-lg p-6 md:p-8 bg-purple-400/5 backdrop-blur text-center">
+                <h2 className="text-lg md:text-xl font-semibold text-purple-300 mb-4">
                   No Match Today
                 </h2>
-                <p className="text-purple-200/60 mb-6">
+                <p className="text-purple-200/60 mb-6 text-sm md:text-base">
                   Your frequency couldn't find a resonant match in today's pool. Try again tomorrow!
                 </p>
                 <Link
