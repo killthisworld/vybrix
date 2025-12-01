@@ -41,7 +41,7 @@ interface Coin {
 }
 
 const STAR_COUNT = 100;
-const GAME_AREA_BOTTOM = 75; // Game area stops before controls
+const GAME_AREA_BOTTOM = 75;
 
 interface ReceiveResponse {
   status: string;
@@ -95,20 +95,26 @@ export default function ReceivePage() {
     }));
     setStars(newStars);
     
-    // Initialize audio
+    // Initialize audio with fallback sounds
     if (typeof window !== 'undefined') {
-      bgMusicRef.current = new Audio('https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3');
+      // Using data URIs for simple sounds to ensure they work
+      bgMusicRef.current = new Audio();
       bgMusicRef.current.loop = true;
       bgMusicRef.current.volume = 0.3;
+      // Fallback to a simple tone if external audio fails
+      bgMusicRef.current.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGH0fPTgjMGHm7A7+OZUQ8PVqnn77BfGAg+ltryxHMpBSp+zPLaizsIGGS57OihUhELTKXh8bllHAU2jdXzzn0vBSh1xu/glkULEmCz6+2mVBkKQ5zd8r5xIwYug8rx14Y5BxtoufDopVYSC0qj4fK8cSQGMYvU8tGAMQYebsLv45lSDg9Vqejv';
       
-      shootSoundRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3');
-      shootSoundRef.current.volume = 0.4;
+      shootSoundRef.current = new Audio();
+      shootSoundRef.current.volume = 0.5;
+      shootSoundRef.current.src = 'data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4AAACB';
       
-      explosionSoundRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-hit-1704.mp3');
-      explosionSoundRef.current.volume = 0.5;
+      explosionSoundRef.current = new Audio();
+      explosionSoundRef.current.volume = 0.6;
+      explosionSoundRef.current.src = 'data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4AAACB';
       
-      coinSoundRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3');
-      coinSoundRef.current.volume = 0.6;
+      coinSoundRef.current = new Audio();
+      coinSoundRef.current.volume = 0.7;
+      coinSoundRef.current.src = 'data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU4AAACB';
     }
   }, []);
 
@@ -123,7 +129,7 @@ export default function ReceivePage() {
   useEffect(() => {
     if (gameStarted) {
       startGame();
-      bgMusicRef.current?.play();
+      bgMusicRef.current?.play().catch(e => console.log('Audio play failed:', e));
     } else {
       stopGame();
       bgMusicRef.current?.pause();
@@ -187,7 +193,6 @@ export default function ReceivePage() {
       }]);
     }, 2000);
     
-    // Spawn coins
     coinSpawnRef.current = window.setInterval(() => {
       setCoins(prev => [...prev, {
         id: nextCoinId.current++,
@@ -218,7 +223,6 @@ export default function ReceivePage() {
         .filter(exp => exp.frame < 15)
       );
 
-      // Check bullet-enemy collisions
       setBullets(prevBullets => {
         let newBullets = [...prevBullets];
         
@@ -241,7 +245,7 @@ export default function ReceivePage() {
                   frame: 0
                 }]);
                 setScore(prev => prev + 5);
-                explosionSoundRef.current?.play().catch(() => {});
+                playSound(explosionSoundRef.current);
               }
             });
           });
@@ -252,7 +256,6 @@ export default function ReceivePage() {
         return newBullets;
       });
       
-      // Check coin collection
       setCoins(prevCoins => {
         const ufoX = 15;
         const collected = prevCoins.filter(coin => {
@@ -262,7 +265,7 @@ export default function ReceivePage() {
           
           if (distance < 6) {
             setScore(prev => prev + 10);
-            coinSoundRef.current?.play().catch(() => {});
+            playSound(coinSoundRef.current);
             return false;
           }
           return true;
@@ -270,7 +273,6 @@ export default function ReceivePage() {
         return collected;
       });
 
-      // Check UFO-enemy collisions
       setEnemies(prevEnemies => {
         const ufoX = 15;
         let hit = false;
@@ -288,7 +290,7 @@ export default function ReceivePage() {
               y: enemy.y,
               frame: 0
             }]);
-            explosionSoundRef.current?.play().catch(() => {});
+            playSound(explosionSoundRef.current);
             return false;
           }
           return true;
@@ -321,6 +323,13 @@ export default function ReceivePage() {
     }
   };
 
+  const playSound = (audio: HTMLAudioElement | null) => {
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(e => console.log('Sound play failed:', e));
+    }
+  };
+
   const moveUp = () => {
     setUfoY(prev => Math.max(10, prev - 5));
   };
@@ -335,7 +344,7 @@ export default function ReceivePage() {
       x: 20,
       y: ufoY
     }]);
-    shootSoundRef.current?.play().catch(() => {});
+    playSound(shootSoundRef.current);
   };
 
   const fetchMessage = async () => {
@@ -515,7 +524,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden flex flex-col">
+    <div className="h-screen bg-black relative overflow-hidden flex flex-col">
       <style jsx>{`
         @keyframes moveStars {
           from { transform: translateX(100vw); }
@@ -534,9 +543,9 @@ export default function ReceivePage() {
           50% { opacity: 1; }
         }
         
-        @keyframes coinSpin {
-          0% { transform: translate(-50%, -50%) rotateY(0deg); }
-          100% { transform: translate(-50%, -50%) rotateY(360deg); }
+        @keyframes ufoGlow {
+          0%, 100% { filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.5)); }
+          50% { filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.8)); }
         }
         
         .moving-star {
@@ -549,6 +558,10 @@ export default function ReceivePage() {
         
         .loading-dot {
           animation: dotPulse 1.4s ease-in-out infinite;
+        }
+        
+        .ufo-glow {
+          animation: ufoGlow 2s ease-in-out infinite;
         }
       `}</style>
 
@@ -595,8 +608,8 @@ export default function ReceivePage() {
                 🎮 Play Game While You Wait!
               </button>
               
-              <p className="text-purple-300/60 text-sm mt-4">
-                Shoot missiles and collect coins!
+              <p className="text-purple-300/70 text-sm mt-4">
+                Highest score gets their message shared on the leaderboard!
               </p>
             </div>
 
@@ -611,8 +624,8 @@ export default function ReceivePage() {
 
       {(status === 'waiting' || status === 'pending') && gameStarted && (
         <>
-          {/* Game Screen Area */}
-          <div className="flex-1 relative" style={{ height: 'calc(100vh - 180px)' }}>
+          {/* Game Screen Area - adjusted height */}
+          <div className="flex-1 relative overflow-hidden">
             <div className="absolute inset-0 overflow-hidden border-b-4 border-purple-500/50">
               {stars.map((star, i) => (
                 <div
@@ -635,7 +648,7 @@ export default function ReceivePage() {
             </div>
 
             <div 
-              className={`absolute z-20 ${isHit ? 'flickering' : ''}`}
+              className={`absolute z-20 ufo-glow ${isHit ? 'flickering' : ''}`}
               style={{
                 left: '15%',
                 top: `${ufoY}%`,
@@ -765,11 +778,20 @@ export default function ReceivePage() {
                     <polygon points="2,10 8,8.5 8,11.5" fill="#064e3b" />
                   </svg>
                 ) : (
-                  <svg width="40" height="40" viewBox="0 0 40 40">
-                    <circle cx="20" cy="20" r="16" fill="#78716c" />
-                    <circle cx="15" cy="15" r="4" fill="#57534e" />
-                    <circle cx="26" cy="22" r="5" fill="#57534e" />
-                    <circle cx="17" cy="26" r="3" fill="#57534e" />
+                  <svg width="45" height="45" viewBox="0 0 45 45">
+                    <defs>
+                      <radialGradient id="rockGrad">
+                        <stop offset="0%" stopColor="#78716c" />
+                        <stop offset="50%" stopColor="#57534e" />
+                        <stop offset="100%" stopColor="#44403c" />
+                      </radialGradient>
+                    </defs>
+                    {/* Irregular rock shape */}
+                    <path d="M 22 5 L 35 12 L 40 25 L 32 38 L 15 40 L 5 28 L 8 15 Z" fill="url(#rockGradient)" />
+                    <ellipse cx="18" cy="16" rx="5" ry="4" fill="#44403c" opacity="0.7" />
+                    <ellipse cx="28" cy="24" rx="6" ry="5" fill="#292524" opacity="0.6" />
+                    <ellipse cx="20" cy="30" rx="4" ry="3" fill="#292524" opacity="0.5" />
+                    <path d="M 22 5 L 35 12 L 30 18 L 18 10 Z" fill="#a8a29e" opacity="0.3" />
                   </svg>
                 )}
               </div>
@@ -805,8 +827,8 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area */}
-          <div className="h-[180px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-8 px-8">
+          {/* Controller Area - fixed height */}
+          <div className="h-[140px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-center gap-12 px-8 flex-shrink-0">
             <div className="flex gap-3">
               <button
                 onClick={moveUp}
@@ -822,18 +844,22 @@ export default function ReceivePage() {
               </button>
             </div>
 
-            <button
-              onClick={shoot}
-              className="w-24 h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-xl font-bold active:scale-95 transition-all shadow-2xl"
-            >
-              SHOOT
-            </button>
-            
             <div className="text-center">
-              <Link href="/" className="text-purple-300/60 hover:text-purple-300 text-sm transition-colors">
+              <Link 
+                href="/" 
+                onClick={() => setGameStarted(false)}
+                className="text-purple-300/70 hover:text-purple-300 text-sm transition-colors block mb-1"
+              >
                 ← Exit Game
               </Link>
             </div>
+            
+            <button
+              onClick={shoot}
+              className="w-24 h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-lg font-bold active:scale-95 transition-all shadow-2xl"
+            >
+              SHOOT
+            </button>
           </div>
         </>
       )}
