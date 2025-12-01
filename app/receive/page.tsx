@@ -173,6 +173,7 @@ export default function ReceivePage() {
     setExplosions([]);
     setCoins([]);
     setUfoY(40);
+    setIsHit(false);
     nextEnemyId.current = 0;
     nextBulletId.current = 0;
     nextExplosionId.current = 0;
@@ -313,7 +314,6 @@ export default function ReceivePage() {
           setLives(prev => {
             const newLives = prev - 1;
             if (newLives <= 0) {
-              // Game over - save score and show game over screen
               setScore(currentScore => {
                 setFinalScore(currentScore);
                 saveGameScore(currentScore);
@@ -324,7 +324,7 @@ export default function ReceivePage() {
             }
             return newLives;
           });
-          setTimeout(() => setIsHit(false), 500);
+          setTimeout(() => setIsHit(false), 600); // Slightly longer for flicker animation
         }
         
         return remainingEnemies;
@@ -675,10 +675,13 @@ export default function ReceivePage() {
         }
         
         @keyframes flicker {
-          0%, 100% { opacity: 1; }
-          25% { opacity: 0.2; }
-          50% { opacity: 1; }
+          0% { opacity: 1; }
+          15% { opacity: 0.2; }
+          30% { opacity: 1; }
+          45% { opacity: 0.3; }
+          60% { opacity: 1; }
           75% { opacity: 0.2; }
+          100% { opacity: 1; }
         }
         
         @keyframes dotPulse {
@@ -700,7 +703,7 @@ export default function ReceivePage() {
         }
         
         .flickering {
-          animation: flicker 0.5s;
+          animation: flicker 0.6s ease-in-out;
         }
         
         .loading-dot {
@@ -790,7 +793,6 @@ export default function ReceivePage() {
               ))}
             </div>
 
-            {/* Lives display - top left */}
             <div className="absolute top-2 left-2 md:top-4 md:left-4 z-30 flex items-center gap-2">
               <span className="text-base md:text-xl font-bold text-cyan-400">Life count:</span>
               <div className="flex gap-1 text-2xl md:text-3xl">
@@ -802,7 +804,6 @@ export default function ReceivePage() {
               </div>
             </div>
 
-            {/* Score display - top right */}
             <div className="absolute top-2 right-2 md:top-4 md:right-4 z-30 text-base md:text-xl font-bold text-cyan-400 bg-black/50 px-2 py-1 md:px-3 md:py-1 rounded-lg">
               Score: {score}
             </div>
@@ -1014,7 +1015,6 @@ export default function ReceivePage() {
         </>
       )}
 
-      {/* Game Over Screen */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
