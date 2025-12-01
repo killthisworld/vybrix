@@ -255,33 +255,31 @@ export default function ReceivePage() {
         .filter(exp => exp.frame < 15)
       );
 
-      // Bullet-enemy collision - bullet disappears on first hit
-      setBullets(prevBullets => {
-        let remainingBullets = [...prevBullets];
-        const bulletsToRemove = new Set<number>();
+      // Bullet-enemy collision detection with immediate removal
+      setEnemies(prevEnemies => {
+        let updatedEnemies = [...prevEnemies];
         
-        setEnemies(prevEnemies => {
-          let remainingEnemies = [...prevEnemies];
-          const enemiesToRemove = new Set<number>();
+        setBullets(prevBullets => {
+          let updatedBullets = [...prevBullets];
           
-          prevBullets.forEach(bullet => {
-            // Skip if bullet already hit something
-            if (bulletsToRemove.has(bullet.id)) return;
+          // Check each bullet against each enemy
+          for (let i = updatedBullets.length - 1; i >= 0; i--) {
+            const bullet = updatedBullets[i];
+            let bulletHit = false;
             
-            prevEnemies.forEach(enemy => {
-              // Skip if enemy already destroyed
-              if (enemiesToRemove.has(enemy.id)) return;
+            for (let j = updatedEnemies.length - 1; j >= 0; j--) {
+              const enemy = updatedEnemies[j];
               
               const distance = Math.sqrt(
-                Math.pow(bullet.x - enemy.x, 2) + Math.pow(bullet.y - enemy.y, 2)
+                Math.pow(bullet.x - enemy.x, 2) + 
+                Math.pow(bullet.y - enemy.y, 2)
               );
               
               if (distance < 5) {
-                // Mark bullet and enemy for removal
-                bulletsToRemove.add(bullet.id);
-                enemiesToRemove.add(enemy.id);
+                // Hit detected! Remove both bullet and enemy
+                bulletHit = true;
                 
-                // Create explosion at enemy position
+                // Create explosion
                 setExplosions(prev => [...prev, {
                   id: nextExplosionId.current++,
                   x: enemy.x,
@@ -289,19 +287,27 @@ export default function ReceivePage() {
                   frame: 0
                 }]);
                 
+                // Add score
                 setScore(prev => prev + 5);
+                
+                // Remove enemy
+                updatedEnemies.splice(j, 1);
+                
+                // Break out of enemy loop since bullet hit something
+                break;
               }
-            });
-          });
+            }
+            
+            // Remove bullet if it hit something
+            if (bulletHit) {
+              updatedBullets.splice(i, 1);
+            }
+          }
           
-          // Remove destroyed enemies
-          remainingEnemies = remainingEnemies.filter(e => !enemiesToRemove.has(e.id));
-          return remainingEnemies;
+          return updatedBullets;
         });
         
-        // Remove bullets that hit something
-        remainingBullets = remainingBullets.filter(b => !bulletsToRemove.has(b.id));
-        return remainingBullets;
+        return updatedEnemies;
       });
 
       setEnemies(prevEnemies => {
