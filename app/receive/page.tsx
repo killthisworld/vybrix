@@ -324,7 +324,7 @@ export default function ReceivePage() {
             }
             return newLives;
           });
-          setTimeout(() => setIsHit(false), 600); // Slightly longer for flicker animation
+          setTimeout(() => setIsHit(false), 600);
         }
         
         return remainingEnemies;
@@ -674,13 +674,17 @@ export default function ReceivePage() {
           to { transform: translateX(-100vw); }
         }
         
-        @keyframes flicker {
+        @keyframes ufoFlicker {
           0% { opacity: 1; }
-          15% { opacity: 0.2; }
-          30% { opacity: 1; }
-          45% { opacity: 0.3; }
+          10% { opacity: 0.1; }
+          20% { opacity: 1; }
+          30% { opacity: 0.2; }
+          40% { opacity: 1; }
+          50% { opacity: 0.1; }
           60% { opacity: 1; }
-          75% { opacity: 0.2; }
+          70% { opacity: 0.3; }
+          80% { opacity: 1; }
+          90% { opacity: 0.1; }
           100% { opacity: 1; }
         }
         
@@ -703,7 +707,7 @@ export default function ReceivePage() {
         }
         
         .flickering {
-          animation: flicker 0.6s ease-in-out;
+          animation: ufoFlicker 0.6s ease-in-out !important;
         }
         
         .loading-dot {
@@ -809,7 +813,7 @@ export default function ReceivePage() {
             </div>
 
             <div 
-              className={`absolute z-20 ufo-glow ${isHit ? 'flickering' : ''}`}
+              className={`absolute z-20 ${isHit ? 'flickering' : 'ufo-glow'}`}
               style={{
                 left: '15%',
                 top: `${ufoY}%`,
@@ -1015,6 +1019,7 @@ export default function ReceivePage() {
         </>
       )}
 
+      {/* Rest of the component remains the same... */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
