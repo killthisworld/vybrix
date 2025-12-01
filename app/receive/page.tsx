@@ -69,6 +69,7 @@ export default function ReceivePage() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [isHit, setIsHit] = useState(false);
   const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
   const [showLanding, setShowLanding] = useState(false);
   const [landingProgress, setLandingProgress] = useState(0);
   
@@ -81,7 +82,6 @@ export default function ReceivePage() {
   const nextCoinId = useRef(0);
   const ufoYRef = useRef(40);
 
-  // Keep ufoYRef in sync with ufoY
   useEffect(() => {
     ufoYRef.current = ufoY;
   }, [ufoY]);
@@ -177,7 +177,7 @@ export default function ReceivePage() {
     }, 3000);
 
     const gameLoop = () => {
-      const ufoX = 15; // UFO X position constant
+      const ufoX = 15;
       
       setEnemies(prev => prev
         .map(enemy => ({ ...enemy, x: enemy.x - enemy.speed }))
@@ -189,7 +189,6 @@ export default function ReceivePage() {
         .filter(bullet => bullet.x < 105)
       );
       
-      // Move coins and check for UFO collision using ref
       setCoins(prev => {
         const currentUfoY = ufoYRef.current;
         const remaining: Coin[] = [];
@@ -201,19 +200,16 @@ export default function ReceivePage() {
             rotation: coin.rotation + 5 
           };
           
-          // Remove if off screen
           if (newCoin.x < -10) {
             return;
           }
           
-          // Check collision with UFO - larger radius for easier collection
           const distance = Math.sqrt(
             Math.pow(ufoX - newCoin.x, 2) + Math.pow(currentUfoY - newCoin.y, 2)
           );
           
-          if (distance < 12) { // Increased from 8 to 12
+          if (distance < 12) {
             setScore(s => s + 10);
-            // Don't add to remaining - coin is collected
           } else {
             remaining.push(newCoin);
           }
@@ -227,7 +223,6 @@ export default function ReceivePage() {
         .filter(exp => exp.frame < 15)
       );
 
-      // Bullet-enemy collision
       setBullets(prevBullets => {
         let newBullets = [...prevBullets];
         
@@ -260,7 +255,6 @@ export default function ReceivePage() {
         return newBullets;
       });
 
-      // Enemy-UFO collision using ref
       setEnemies(prevEnemies => {
         const currentUfoY = ufoYRef.current;
         let hit = false;
@@ -285,7 +279,15 @@ export default function ReceivePage() {
         
         if (hit) {
           setIsHit(true);
-          setScore(0);
+          setLives(prev => {
+            const newLives = prev - 1;
+            if (newLives <= 0) {
+              // Game over - reset everything
+              setScore(0);
+              return 3;
+            }
+            return newLives;
+          });
           setTimeout(() => setIsHit(false), 500);
         }
         
@@ -752,6 +754,16 @@ export default function ReceivePage() {
               ))}
             </div>
 
+            {/* Lives display - top left */}
+            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-30 flex gap-1 text-2xl md:text-3xl">
+              {[...Array(3)].map((_, i) => (
+                <span key={i}>
+                  {i < lives ? '👽' : '❌'}
+                </span>
+              ))}
+            </div>
+
+            {/* Score display - top right */}
             <div className="absolute top-2 right-2 md:top-4 md:right-4 z-30 text-base md:text-xl font-bold text-cyan-400 bg-black/50 px-2 py-1 md:px-3 md:py-1 rounded-lg">
               Score: {score}
             </div>
@@ -927,9 +939,7 @@ export default function ReceivePage() {
             })}
           </div>
 
-          {/* Controller Area - buttons side by side on left, shoot on right */}
           <div className="h-[100px] bg-gradient-to-t from-gray-900 to-gray-800 border-t-4 border-purple-500/50 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
-            {/* Left side - Up/Down buttons SIDE BY SIDE */}
             <div className="flex gap-3">
               <button
                 onClick={moveUp}
@@ -945,7 +955,6 @@ export default function ReceivePage() {
               </button>
             </div>
 
-            {/* Center - Exit */}
             <div className="text-center">
               <Link 
                 href="/" 
@@ -956,7 +965,6 @@ export default function ReceivePage() {
               </Link>
             </div>
             
-            {/* Right side - Shoot button */}
             <button
               onClick={shoot}
               className="w-20 h-20 md:w-24 md:h-24 bg-red-600 hover:bg-red-700 rounded-full text-white text-base md:text-lg font-bold active:scale-95 transition-all shadow-2xl"
