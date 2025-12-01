@@ -83,10 +83,20 @@ export default function ReceivePage() {
   const nextExplosionId = useRef(0);
   const nextCoinId = useRef(0);
   const ufoYRef = useRef(40);
+  const enemiesRef = useRef<Enemy[]>([]);
+  const bulletsRef = useRef<Bullet[]>([]);
 
   useEffect(() => {
     ufoYRef.current = ufoY;
   }, [ufoY]);
+
+  useEffect(() => {
+    enemiesRef.current = enemies;
+  }, [enemies]);
+
+  useEffect(() => {
+    bulletsRef.current = bullets;
+  }, [bullets]);
 
   useEffect(() => {
     const newStars = Array.from({ length: STAR_COUNT }, () => ({
@@ -178,6 +188,8 @@ export default function ReceivePage() {
     nextBulletId.current = 0;
     nextExplosionId.current = 0;
     nextCoinId.current = 0;
+    enemiesRef.current = [];
+    bulletsRef.current = [];
   };
 
   const startGame = () => {
@@ -255,61 +267,57 @@ export default function ReceivePage() {
         .filter(exp => exp.frame < 15)
       );
 
-      // Bullet-enemy collision detection with immediate removal
-      setEnemies(prevEnemies => {
-        let updatedEnemies = [...prevEnemies];
+      // Bullet-enemy collision detection
+      const currentBullets = bulletsRef.current;
+      const currentEnemies = enemiesRef.current;
+      
+      const bulletsToRemove: number[] = [];
+      const enemiesToRemove: number[] = [];
+      const newExplosions: Explosion[] = [];
+      let scoreToAdd = 0;
+      
+      currentBullets.forEach(bullet => {
+        if (bulletsToRemove.includes(bullet.id)) return;
         
-        setBullets(prevBullets => {
-          let updatedBullets = [...prevBullets];
+        currentEnemies.forEach(enemy => {
+          if (enemiesToRemove.includes(enemy.id)) return;
           
-          // Check each bullet against each enemy
-          for (let i = updatedBullets.length - 1; i >= 0; i--) {
-            const bullet = updatedBullets[i];
-            let bulletHit = false;
-            
-            for (let j = updatedEnemies.length - 1; j >= 0; j--) {
-              const enemy = updatedEnemies[j];
-              
-              const distance = Math.sqrt(
-                Math.pow(bullet.x - enemy.x, 2) + 
-                Math.pow(bullet.y - enemy.y, 2)
-              );
-              
-              if (distance < 5) {
-                // Hit detected! Remove both bullet and enemy
-                bulletHit = true;
-                
-                // Create explosion
-                setExplosions(prev => [...prev, {
-                  id: nextExplosionId.current++,
-                  x: enemy.x,
-                  y: enemy.y,
-                  frame: 0
-                }]);
-                
-                // Add score
-                setScore(prev => prev + 5);
-                
-                // Remove enemy
-                updatedEnemies.splice(j, 1);
-                
-                // Break out of enemy loop since bullet hit something
-                break;
-              }
-            }
-            
-            // Remove bullet if it hit something
-            if (bulletHit) {
-              updatedBullets.splice(i, 1);
-            }
+          const distance = Math.sqrt(
+            Math.pow(bullet.x - enemy.x, 2) + 
+            Math.pow(bullet.y - enemy.y, 2)
+          );
+          
+          if (distance < 5) {
+            bulletsToRemove.push(bullet.id);
+            enemiesToRemove.push(enemy.id);
+            newExplosions.push({
+              id: nextExplosionId.current++,
+              x: enemy.x,
+              y: enemy.y,
+              frame: 0
+            });
+            scoreToAdd += 5;
           }
-          
-          return updatedBullets;
         });
-        
-        return updatedEnemies;
       });
+      
+      if (bulletsToRemove.length > 0) {
+        setBullets(prev => prev.filter(b => !bulletsToRemove.includes(b.id)));
+      }
+      
+      if (enemiesToRemove.length > 0) {
+        setEnemies(prev => prev.filter(e => !enemiesToRemove.includes(e.id)));
+      }
+      
+      if (newExplosions.length > 0) {
+        setExplosions(prev => [...prev, ...newExplosions]);
+      }
+      
+      if (scoreToAdd > 0) {
+        setScore(prev => prev + scoreToAdd);
+      }
 
+      // UFO-enemy collision
       setEnemies(prevEnemies => {
         const currentUfoY = ufoYRef.current;
         let hit = false;
@@ -1042,6 +1050,7 @@ export default function ReceivePage() {
         </>
       )}
 
+      {/* Keeping rest of component the same - game over, received message, etc... */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
@@ -1097,7 +1106,7 @@ export default function ReceivePage() {
         </>
       )}
 
-      {status === 'received' && receivedMessage && !showLanding && (
+{status === 'received' && receivedMessage && !showLanding && (
         <>
           <div className="fixed inset-0">
             {stars.map((star, i) => (
