@@ -64,7 +64,6 @@ export default function ReceivePage() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
-  const [showShareMenu, setShowShareMenu] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
   const [ufoY, setUfoY] = useState(40);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -186,7 +185,6 @@ export default function ReceivePage() {
     setCoins([]);
     setUfoY(40);
     setIsHit(false);
-    setShowShareMenu(false);
     setShowSurvey(false);
     nextEnemyId.current = 0;
     nextBulletId.current = 0;
@@ -414,49 +412,8 @@ export default function ReceivePage() {
     }
   };
 
-  const shareToFacebook = () => {
-    const url = window.location.origin;
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-    
-    if (typeof window !== 'undefined' && (window as any).plausible) {
-      (window as any).plausible('Share', { props: { platform: 'Facebook', score: finalScore } });
-    }
-  };
-
-  const shareToInstagram = () => {
-    // Instagram doesn't support direct web sharing, so copy to clipboard
-    const text = `🛸 Just scored ${finalScore} on Vybrix! Check it out: ${window.location.origin}`;
-    navigator.clipboard.writeText(text);
-    alert('📋 Message copied! Paste it in your Instagram story or post');
-    
-    if (typeof window !== 'undefined' && (window as any).plausible) {
-      (window as any).plausible('Share', { props: { platform: 'Instagram', score: finalScore } });
-    }
-  };
-
-  const shareToSnapchat = () => {
-    const url = window.location.origin;
-    window.open(`https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(url)}`, '_blank');
-    
-    if (typeof window !== 'undefined' && (window as any).plausible) {
-      (window as any).plausible('Share', { props: { platform: 'Snapchat', score: finalScore } });
-    }
-  };
-
-  const shareToTikTok = () => {
-    // TikTok doesn't have direct web sharing, copy to clipboard
-    const text = `🛸 Just scored ${finalScore} on Vybrix! ${window.location.origin}`;
-    navigator.clipboard.writeText(text);
-    alert('📋 Message copied! Share it on TikTok');
-    
-    if (typeof window !== 'undefined' && (window as any).plausible) {
-      (window as any).plausible('Share', { props: { platform: 'TikTok', score: finalScore } });
-    }
-  };
-
   const openSurvey = () => {
     setShowSurvey(true);
-    setShowShareMenu(false);
     
     if (typeof window !== 'undefined' && (window as any).plausible) {
       (window as any).plausible('Survey Opened');
@@ -1121,7 +1078,7 @@ export default function ReceivePage() {
         </>
       )}
 
-      {/* Game Over Screen with Share Menu */}
+      {/* Game Over Screen - X Share Only */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
@@ -1156,13 +1113,14 @@ export default function ReceivePage() {
                 Your score has been saved! The highest score of the day will be featured on the leaderboard.
               </p>
 
-              {!showShareMenu && !showSurvey && (
+              {!showSurvey && (
                 <div className="space-y-3">
                   <button
-                    onClick={() => setShowShareMenu(true)}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl font-bold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all transform hover:scale-105"
+                    onClick={shareToTwitter}
+                    className="w-full px-8 py-4 bg-black hover:bg-gray-900 text-white text-xl font-bold rounded-lg transition-all transform hover:scale-105 border-2 border-white flex items-center justify-center gap-3"
                   >
-                    📱 Share My Score
+                    <span className="text-2xl">𝕏</span>
+                    Share on X
                   </button>
 
                   <button
@@ -1177,55 +1135,6 @@ export default function ReceivePage() {
                     className="w-full px-8 py-3 bg-purple-600/30 border-2 border-purple-400 text-purple-200 text-lg font-semibold rounded-lg hover:bg-purple-600/50 transition-all"
                   >
                     💭 Give Feedback
-                  </button>
-                </div>
-              )}
-
-              {showShareMenu && (
-                <div className="bg-gray-900/90 backdrop-blur rounded-lg p-6 border-2 border-purple-400/50">
-                  <h3 className="text-xl font-bold text-purple-300 mb-4">Share Your Score!</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={shareToTwitter}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all"
-                    >
-                      <span className="text-xl">𝕏</span>
-                      Twitter
-                    </button>
-                    <button
-                      onClick={shareToFacebook}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all"
-                    >
-                      <span className="text-xl">f</span>
-                      Facebook
-                    </button>
-                    <button
-                      onClick={shareToInstagram}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-all"
-                    >
-                      <span className="text-xl">📷</span>
-                      Instagram
-                    </button>
-                    <button
-                      onClick={shareToSnapchat}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-lg transition-all"
-                    >
-                      <span className="text-xl">👻</span>
-                      Snapchat
-                    </button>
-                    <button
-                      onClick={shareToTikTok}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-black hover:bg-gray-900 text-white font-semibold rounded-lg transition-all border-2 border-cyan-400"
-                    >
-                      <span className="text-xl">🎵</span>
-                      TikTok
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => setShowShareMenu(false)}
-                    className="mt-4 w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all"
-                  >
-                    ← Back
                   </button>
                 </div>
               )}
