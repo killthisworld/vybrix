@@ -105,6 +105,37 @@ export default function ReceivePage() {
     }
   }, [showSurvey]);
 
+  // Keyboard controls for desktop
+  useEffect(() => {
+    if (!gameStarted || gameOver) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default behavior for game keys
+      if (['w', 's', 'W', 'S', 'Enter'].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      switch(e.key.toLowerCase()) {
+        case 'w':
+          setUfoY(prev => Math.max(10, prev - 5));
+          break;
+        case 's':
+          setUfoY(prev => Math.min(GAME_AREA_BOTTOM, prev + 5));
+          break;
+        case 'enter':
+          setBullets(prev => [...prev, {
+            id: nextBulletId.current++,
+            x: 20,
+            y: ufoYRef.current
+          }]);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameStarted, gameOver]);
+
   useEffect(() => {
     ufoYRef.current = ufoY;
   }, [ufoY]);
@@ -427,6 +458,17 @@ export default function ReceivePage() {
     // Track share event
     if (typeof window !== 'undefined' && (window as any).plausible) {
       (window as any).plausible('Share', { props: { platform: 'Twitter', score: finalScore } });
+    }
+  };
+
+  const shareVybrixToTwitter = () => {
+    const text = `🛸 Just tried Vybrix - a cosmic pen pal app that matches you with strangers once a day!\n\nPlay retro arcade games while you wait 👽🎮\n\nJoin me in expanding the network:`;
+    const url = window.location.origin;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    
+    // Track share event
+    if (typeof window !== 'undefined' && (window as any).plausible) {
+      (window as any).plausible('Share', { props: { platform: 'Twitter', context: 'NoMatch' } });
     }
   };
 
@@ -886,6 +928,16 @@ export default function ReceivePage() {
               Score: {score}
             </div>
 
+            {/* Desktop controls hint */}
+            <div className="hidden md:block absolute bottom-4 left-4 z-30 bg-black/70 backdrop-blur px-4 py-2 rounded-lg border border-purple-400/30">
+              <p className="text-purple-300 text-sm font-semibold mb-1">Keyboard Controls:</p>
+              <div className="text-cyan-400 text-xs space-y-0.5">
+                <div><span className="bg-purple-600/50 px-2 py-0.5 rounded">W</span> Move Up</div>
+                <div><span className="bg-purple-600/50 px-2 py-0.5 rounded">S</span> Move Down</div>
+                <div><span className="bg-purple-600/50 px-2 py-0.5 rounded">Enter</span> Shoot</div>
+              </div>
+            </div>
+
             <div 
               className={`absolute z-20 ${isHit ? 'flickering' : 'ufo-glow'}`}
               style={{
@@ -1096,7 +1148,7 @@ export default function ReceivePage() {
         </>
       )}
 
-      {/* Game Over Screen with Tally Survey */}
+      {/* Rest of the component remains the same - game over, received message, etc. */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
@@ -1334,6 +1386,24 @@ export default function ReceivePage() {
                 <p className="text-purple-200/60 mb-6 text-sm md:text-base">
                   Your frequency couldn't find a resonant match in today's pool. Try again tomorrow!
                 </p>
+                
+                {/* Call to action box */}
+                <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border-2 border-cyan-400/30 rounded-lg p-6 mb-6">
+                  <p className="text-cyan-300 font-semibold mb-3 text-base md:text-lg">
+                    💡 Help Us Grow the Network!
+                  </p>
+                  <p className="text-purple-200/70 text-sm mb-4">
+                    More users = better matches for everyone. Share Vybrix with your friends!
+                  </p>
+                  <button
+                    onClick={shareVybrixToTwitter}
+                    className="w-full px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold rounded-lg transition-all transform hover:scale-105 border-2 border-white flex items-center justify-center gap-3"
+                  >
+                    <span className="text-xl">𝕏</span>
+                    Share Vybrix on X
+                  </button>
+                </div>
+
                 <Link
                   href="/"
                   className="inline-block px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
