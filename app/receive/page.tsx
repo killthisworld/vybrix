@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 
 interface Star {
   x: number;
@@ -51,7 +51,6 @@ interface ReceiveResponse {
 }
 
 export default function ReceivePage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [status, setStatus] = useState<string>('');
@@ -86,6 +85,25 @@ export default function ReceivePage() {
   const ufoYRef = useRef(40);
   const enemiesRef = useRef<Enemy[]>([]);
   const bulletsRef = useRef<Bullet[]>([]);
+
+  // Load Tally script when survey is opened
+  useEffect(() => {
+    if (showSurvey && typeof window !== 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://tally.so/widgets/embed.js';
+      script.async = true;
+      script.onload = () => {
+        if ((window as any).Tally) {
+          (window as any).Tally.loadEmbeds();
+        }
+      };
+      document.body.appendChild(script);
+
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, [showSurvey]);
 
   useEffect(() => {
     ufoYRef.current = ufoY;
@@ -1078,7 +1096,7 @@ export default function ReceivePage() {
         </>
       )}
 
-      {/* Game Over Screen - X Share Only */}
+      {/* Game Over Screen with Tally Survey */}
       {gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
@@ -1099,7 +1117,7 @@ export default function ReceivePage() {
           </div>
 
           <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4">
-            <div className="text-center max-w-md">
+            <div className="text-center max-w-md w-full">
               <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 text-transparent bg-clip-text">
                 GAME OVER
               </h2>
@@ -1140,18 +1158,22 @@ export default function ReceivePage() {
               )}
 
               {showSurvey && (
-                <div className="bg-gray-900/90 backdrop-blur rounded-lg p-6 border-2 border-purple-400/50">
-                  <h3 className="text-xl font-bold text-purple-300 mb-4">Quick Survey</h3>
+                <div className="bg-gray-900/90 backdrop-blur rounded-lg p-6 border-2 border-purple-400/50 max-h-[70vh] overflow-y-auto">
+                  <h3 className="text-xl font-bold text-purple-300 mb-4">Help Us Improve! 🌌</h3>
+                  
+                  {/* Tally Embed */}
                   <iframe 
-                    src="https://tally.so/embed/wQqkKd?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+                    data-tally-src="https://tally.so/embed/LZDlLy?alignLeft=1&hideTitle=1&dynamicHeight=1&formEventsForwarding=1"
+                    loading="lazy"
                     width="100%" 
-                    height="400" 
+                    height="500" 
                     frameBorder="0" 
                     marginHeight={0} 
                     marginWidth={0}
-                    title="Vybrix Feedback Survey"
+                    title="Vybrix survey"
                     className="rounded-lg"
                   />
+                  
                   <button
                     onClick={() => setShowSurvey(false)}
                     className="mt-4 w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all"
