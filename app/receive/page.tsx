@@ -109,7 +109,7 @@ export default function ReceivePage() {
     }
   }, [showSurvey]);
 
-  // Keyboard controls for desktop - continuous movement with REDUCED speed
+  // Keyboard controls for desktop - smooth continuous movement
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
@@ -143,15 +143,35 @@ export default function ReceivePage() {
       keysPressed.current.delete(key);
     };
 
-    // Movement loop - REDUCED movement speed for smoother control
-    const moveInterval = setInterval(() => {
+    // Smooth movement loop using requestAnimationFrame for 60fps
+    let lastTime = performance.now();
+    const moveLoop = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+      
+      // Movement speed: pixels per second
+      const moveSpeed = 120; // Adjust this for faster/slower movement
+      const moveAmount = (moveSpeed * deltaTime) / 1000;
+      
+      let newY = ufoYRef.current;
+      
       if (keysPressed.current.has('w')) {
-        setUfoY(prev => Math.max(10, prev - 0.8)); // Reduced from 2 to 0.8
+        newY = Math.max(10, newY - moveAmount);
       }
       if (keysPressed.current.has('s')) {
-        setUfoY(prev => Math.min(GAME_AREA_BOTTOM, prev + 0.8)); // Reduced from 2 to 0.8
+        newY = Math.min(GAME_AREA_BOTTOM, newY + moveAmount);
       }
-    }, 16); // ~60fps
+      
+      if (newY !== ufoYRef.current) {
+        setUfoY(newY);
+      }
+      
+      if (gameStarted && !gameOver) {
+        requestAnimationFrame(moveLoop);
+      }
+    };
+    
+    const animationId = requestAnimationFrame(moveLoop);
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -159,7 +179,7 @@ export default function ReceivePage() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      clearInterval(moveInterval);
+      cancelAnimationFrame(animationId);
       keysPressed.current.clear();
     };
   }, [gameStarted, gameOver]);
@@ -974,7 +994,7 @@ export default function ReceivePage() {
                 left: '15%',
                 top: `${ufoY}%`,
                 transform: 'translate(-50%, -50%)',
-                transition: 'top 0.05s linear'
+                transition: 'none'
               }}
             >
               <svg width="80" height="48" viewBox="0 0 140 80" className="md:w-[100px] md:h-[60px]">
@@ -1057,46 +1077,46 @@ export default function ReceivePage() {
                 }}
               >
                 {enemy.type === 'missile1' ? (
-                  <svg width="56" height="22" viewBox="0 0 50 20" className="md:w-[70px] md:h-[28px]">
+                  <svg width="40" height="32" viewBox="0 0 50 28" className="md:w-[50px] md:h-[40px]">
                     <defs>
                       <linearGradient id="missile1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#991b1b" />
                         <stop offset="100%" stopColor="#dc2626" />
                       </linearGradient>
                     </defs>
-                    <path d="M 5 10 L 40 4 L 48 10 L 40 16 Z" fill="url(#missile1Grad)" />
-                    <circle cx="42" cy="10" r="2" fill="#fbbf24">
+                    <path d="M 5 14 L 40 6 L 48 14 L 40 22 Z" fill="url(#missile1Grad)" />
+                    <circle cx="42" cy="14" r="2" fill="#fbbf24">
                       <animate attributeName="opacity" values="0.5;1;0.5" dur="0.5s" repeatCount="indefinite" />
                     </circle>
-                    <polygon points="2,10 8,7 8,13" fill="#7f1d1d" />
+                    <polygon points="2,14 8,10 8,18" fill="#7f1d1d" />
                   </svg>
                 ) : enemy.type === 'missile2' ? (
-                  <svg width="56" height="22" viewBox="0 0 50 20" className="md:w-[70px] md:h-[28px]">
+                  <svg width="40" height="32" viewBox="0 0 50 28" className="md:w-[50px] md:h-[40px]">
                     <defs>
                       <linearGradient id="missile2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#581c87" />
                         <stop offset="100%" stopColor="#7c3aed" />
                       </linearGradient>
                     </defs>
-                    <path d="M 5 10 L 40 5 L 48 10 L 40 15 Z" fill="url(#missile2Grad)" />
-                    <circle cx="42" cy="10" r="2" fill="#22d3ee">
+                    <path d="M 5 14 L 40 7 L 48 14 L 40 21 Z" fill="url(#missile2Grad)" />
+                    <circle cx="42" cy="14" r="2" fill="#22d3ee">
                       <animate attributeName="opacity" values="0.5;1;0.5" dur="0.6s" repeatCount="indefinite" />
                     </circle>
-                    <polygon points="2,10 8,8 8,12" fill="#4c1d95" />
+                    <polygon points="2,14 8,11 8,17" fill="#4c1d95" />
                   </svg>
                 ) : enemy.type === 'missile3' ? (
-                  <svg width="56" height="22" viewBox="0 0 50 20" className="md:w-[70px] md:h-[28px]">
+                  <svg width="40" height="32" viewBox="0 0 50 28" className="md:w-[50px] md:h-[40px]">
                     <defs>
                       <linearGradient id="missile3Grad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#065f46" />
                         <stop offset="100%" stopColor="#059669" />
                       </linearGradient>
                     </defs>
-                    <path d="M 5 10 L 40 6 L 48 10 L 40 14 Z" fill="url(#missile3Grad)" />
-                    <circle cx="42" cy="10" r="2" fill="#fbbf24">
+                    <path d="M 5 14 L 40 8 L 48 14 L 40 20 Z" fill="url(#missile3Grad)" />
+                    <circle cx="42" cy="14" r="2" fill="#fbbf24">
                       <animate attributeName="opacity" values="0.5;1;0.5" dur="0.7s" repeatCount="indefinite" />
                     </circle>
-                    <polygon points="2,10 8,8.5 8,11.5" fill="#064e3b" />
+                    <polygon points="2,14 8,11.5 8,16.5" fill="#064e3b" />
                   </svg>
                 ) : (
                   <svg width="32" height="32" viewBox="0 0 40 40" className="md:w-[40px] md:h-[40px]">
@@ -1178,7 +1198,7 @@ export default function ReceivePage() {
         </>
       )}
 
-      {gameStarted && gameOver && (
+{gameStarted && gameOver && (
         <>
           <div className="fixed inset-0">
             {stars.map((star, i) => (
