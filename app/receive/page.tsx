@@ -124,10 +124,10 @@ export default function ReceivePage() {
       // Add key to pressed set
       keysPressed.current.add(key);
 
-      // Handle shooting with rate limiting
+      // Handle shooting with rate limiting (150ms = ~7 shots per second)
       if (key === 'enter') {
         const now = Date.now();
-        if (now - lastShootTime.current > 250) { // 250ms cooldown
+        if (now - lastShootTime.current > 150) {
           setBullets(prev => [...prev, {
             id: nextBulletId.current++,
             x: 20,
@@ -493,6 +493,7 @@ export default function ReceivePage() {
   const shoot = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // No rate limiting on button - spam away!
     setBullets(prev => [...prev, {
       id: nextBulletId.current++,
       x: 20,
