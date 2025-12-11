@@ -9,10 +9,12 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "@react-email/components": "^1.0.1",
+    "@supabase/supabase-js": "^2.86.2",
     "axios": "^1.13.2",
     "bullmq": "^5.63.2",
     "dotenv": "^17.2.3",
-    "next": "16.0.3",
+    "next": "^16.0.7",
     "next-plausible": "^3.12.5",
     "pg": "^8.16.3",
     "react": "19.2.0",
