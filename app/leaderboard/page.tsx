@@ -12,9 +12,16 @@ interface Star {
   startX: number;
 }
 
-interface LeaderboardEntry {
+interface DailyEntry {
+  score: number;
+  message: string;
+  date: string;
+}
+
+interface AllTimeEntry {
   token: string;
   highScore: number;
+  message?: string;
   date: string;
 }
 
@@ -22,8 +29,8 @@ const STAR_COUNT = 50;
 
 export default function LeaderboardPage() {
   const [stars, setStars] = useState<Star[]>([]);
-  const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [dailyLeaderboard, setDailyLeaderboard] = useState<DailyEntry[]>([]);
+  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<AllTimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'daily' | 'alltime'>('daily');
   
@@ -50,15 +57,16 @@ export default function LeaderboardPage() {
   const fetchLeaderboards = async () => {
     setLoading(true);
     try {
-      // Fetch daily leaderboard
+      // Fetch daily leaderboard (day-by-day with messages)
       const dailyResponse = await fetch(`/api/leaderboard?month=${selectedMonth}&year=${selectedYear}`);
       const dailyData = await dailyResponse.json();
       setDailyLeaderboard(dailyData.leaderboard || []);
 
-      // Fetch all-time leaderboard
+      // Fetch all-time top 5
       const allTimeResponse = await fetch(`/api/leaderboard/all-time`);
       const allTimeData = await allTimeResponse.json();
-      setAllTimeLeaderboard(allTimeData.leaderboard || []);
+      // Only keep top 5
+      setAllTimeLeaderboard((allTimeData.leaderboard || []).slice(0, 5));
     } catch (err) {
       console.error('Failed to fetch leaderboard:', err);
     } finally {
@@ -73,7 +81,17 @@ export default function LeaderboardPage() {
 
   const years = [selectedYear, selectedYear - 1, selectedYear - 2];
 
-  const currentLeaderboard = activeTab === 'daily' ? dailyLeaderboard : allTimeLeaderboard;
+  // Rank colors: 1=gold, 2=silver, 3=green, 4=blue, 5=purple
+  const getRankColor = (index: number) => {
+    switch(index) {
+      case 0: return 'text-yellow-400'; // Gold
+      case 1: return 'text-gray-300'; // Silver
+      case 2: return 'text-green-400'; // Green
+      case 3: return 'text-blue-400'; // Blue
+      case 4: return 'text-purple-400'; // Purple
+      default: return 'text-purple-400';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pb-16">
@@ -174,34 +192,25 @@ export default function LeaderboardPage() {
                 <div className="w-16 h-16 border-4 border-purple-400/20 border-t-cyan-400 rounded-full animate-spin" />
               </div>
             </div>
-          ) : currentLeaderboard.length === 0 ? (
-            <div className="border-2 border-purple-400/30 rounded-lg p-8 bg-purple-400/5 backdrop-blur text-center">
-              <p className="text-purple-300">
-                {activeTab === 'daily' 
-                  ? `No high scores for ${months[selectedMonth - 1]} ${selectedYear}`
-                  : 'No champions yet - be the first!'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {currentLeaderboard.map((entry, index) => (
-                <div
-                  key={entry.token}
-                  className="border-2 border-purple-400/30 rounded-lg p-6 bg-purple-400/5 backdrop-blur hover:border-cyan-400/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`text-3xl font-bold ${
-                        index === 0 ? 'text-yellow-400' :
-                        index === 1 ? 'text-gray-300' :
-                        index === 2 ? 'text-orange-600' :
-                        'text-purple-400'
-                      }`}>
-                        #{index + 1}
-                      </div>
-                      <div>
+          ) : activeTab === 'daily' ? (
+            /* DAILY TAB - Show day-by-day high scores with messages */
+            dailyLeaderboard.length === 0 ? (
+              <div className="border-2 border-purple-400/30 rounded-lg p-8 bg-purple-400/5 backdrop-blur text-center">
+                <p className="text-purple-300">
+                  No high scores for {months[selectedMonth - 1]} {selectedYear}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dailyLeaderboard.map((entry, index) => (
+                  <div
+                    key={index}
+                    className="border-2 border-purple-400/30 rounded-lg p-6 bg-purple-400/5 backdrop-blur hover:border-cyan-400/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
                         <div className="text-cyan-400 font-bold text-xl">
-                          {entry.highScore} points
+                          {entry.score} points
                         </div>
                         <div className="text-purple-300/60 text-sm">
                           {new Date(entry.date).toLocaleDateString('en-US', {
@@ -212,13 +221,59 @@ export default function LeaderboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-purple-300/40 text-xs font-mono">
-                      {entry.token.slice(0, 8)}...
+                    <div className="bg-black/40 rounded-lg p-4 border border-purple-400/20">
+                      <p className="text-white/90 italic">"{entry.message}"</p>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
+          ) : (
+            /* ALL-TIME TAB - Show top 5, only #1 shows message */
+            allTimeLeaderboard.length === 0 ? (
+              <div className="border-2 border-purple-400/30 rounded-lg p-8 bg-purple-400/5 backdrop-blur text-center">
+                <p className="text-purple-300">
+                  No champions yet - be the first!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {allTimeLeaderboard.map((entry, index) => (
+                  <div
+                    key={entry.token}
+                    className="border-2 border-purple-400/30 rounded-lg p-6 bg-purple-400/5 backdrop-blur hover:border-cyan-400/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`text-4xl font-bold ${getRankColor(index)}`}>
+                          #{index + 1}
+                        </div>
+                        <div>
+                          <div className="text-cyan-400 font-bold text-2xl">
+                            {entry.highScore} points
+                          </div>
+                          <div className="text-purple-300/60 text-sm">
+                            {new Date(entry.date).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Only show message for #1 */}
+                    {index === 0 && entry.message && (
+                      <div className="bg-black/40 rounded-lg p-4 border border-yellow-400/30 mt-4">
+                        <p className="text-yellow-100/90 italic">"{entry.message}"</p>
+                        <p className="text-yellow-400/60 text-xs mt-2">👑 Champion's Message</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
           )}
 
           <div className="text-center mt-8">
