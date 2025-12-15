@@ -24,28 +24,41 @@ export async function POST(request: Request) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #000000 !important;
         }
+        /* Force dark mode email clients to keep black background */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #000000 !important;
+            }
+            .email-container {
+                background-color: #000000 !important;
+            }
+        }
+        /* Gmail dark mode override */
+        u + .body .email-container {
+            background-color: #000000 !important;
+        }
     </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-    <!-- Outer wrapper for black background -->
-    <div style="background-color: #000000; margin: 0; padding: 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #000000; margin: 0; padding: 0;">
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;" class="body">
+    <div style="background-color: #000000; margin: 0; padding: 0;" class="email-container">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #000000 !important; margin: 0; padding: 0;">
             <tr>
-                <td align="center" style="padding: 60px 20px; background-color: #000000;">
+                <td align="center" style="padding: 60px 20px; background-color: #000000 !important;">
                     
-                    <!-- Content container with stars background -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #000000; position: relative;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #000000 !important; position: relative;">
                         <tr>
                             <td style="
                                 text-align: center; 
                                 padding: 40px 20px;
-                                background-color: #000000;
+                                background-color: #000000 !important;
                                 background-image: 
                                     radial-gradient(2px 2px at 20% 30%, white, transparent),
                                     radial-gradient(2px 2px at 60% 70%, white, transparent),
@@ -60,27 +73,25 @@ export async function POST(request: Request) {
                                 background-size: 100% 100%;
                             ">
                                 
-                                <!-- Main heading in solid purple -->
                                 <h1 style="
                                     margin: 0 0 50px 0;
                                     font-size: 32px;
                                     font-weight: bold;
-                                    color: #a855f7;
+                                    color: #a855f7 !important;
                                     line-height: 1.4;
                                 ">
                                     🌟 Your message has found its match! 🌟
                                 </h1>
 
-                                <!-- Purple button with black text -->
                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto;">
                                     <tr>
                                         <td style="
                                             border-radius: 8px;
-                                            background-color: #a855f7;
+                                            background-color: #a855f7 !important;
                                         ">
                                             <a href="https://vybrix.app/receive" style="
                                                 display: block;
-                                                color: #000000;
+                                                color: #000000 !important;
                                                 text-decoration: none;
                                                 padding: 16px 40px;
                                                 font-size: 18px;
@@ -93,10 +104,9 @@ export async function POST(request: Request) {
                                     </tr>
                                 </table>
 
-                                <!-- Footer text -->
                                 <p style="
                                     margin: 50px 0 0 0;
-                                    color: #ffffff;
+                                    color: #ffffff !important;
                                     font-size: 14px;
                                     opacity: 0.7;
                                 ">
