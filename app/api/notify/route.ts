@@ -25,78 +25,68 @@ export async function POST(request: Request) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <meta name="supported-color-schemes" content="light">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-    <div style="background: #000000;">
-        <!-- Use a table as main container - better dark mode support -->
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#000000">
-            <tr>
-                <td align="center" style="padding: 60px 20px;" bgcolor="#000000">
-                    
-                    <!-- Inner content table -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px;" bgcolor="#000000">
-                        <tr>
-                            <td align="center" style="padding: 40px 20px;" bgcolor="#000000">
-                                
-                                <!-- Stars as text/emojis instead of CSS gradients -->
-                                <div style="position: relative; padding: 20px 0;">
-                                    <p style="color: rgba(255,255,255,0.3); font-size: 12px; margin: 0;">✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨</p>
-                                </div>
-                                
-                                <!-- Title -->
-                                <h1 style="
-                                    margin: 30px 0;
-                                    font-size: 28px;
-                                    font-weight: bold;
-                                    color: #a855f7;
-                                    line-height: 1.4;
-                                ">
-                                    🌟 Your message has found its match! 🌟
-                                </h1>
+<body style="margin: 0; padding: 0;">
+    <!-- Use a 1x1 black pixel as background -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==') repeat; background-color: #000000;">
+        <tr>
+            <td align="center" style="padding: 60px 20px;">
+                
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px;">
+                    <tr>
+                        <td align="center" style="padding: 40px 20px;">
+                            
+                            <!-- Stars -->
+                            <p style="color: rgba(255,255,255,0.4); font-size: 16px; margin: 0 0 20px 0;">✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨</p>
+                            
+                            <!-- Title -->
+                            <h1 style="
+                                margin: 20px 0 30px 0;
+                                font-size: 28px;
+                                font-weight: bold;
+                                color: #a855f7;
+                                line-height: 1.4;
+                            ">
+                                🌟 Your message has found its match! 🌟
+                            </h1>
 
-                                <!-- Button -->
-                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 30px auto;">
-                                    <tr>
-                                        <td align="center" style="border-radius: 8px;" bgcolor="#a855f7">
-                                            <a href="https://vybrix.app/receive" style="
-                                                display: inline-block;
-                                                color: #000000;
-                                                background-color: #a855f7;
-                                                text-decoration: none;
-                                                padding: 16px 40px;
-                                                font-size: 18px;
-                                                font-weight: 600;
-                                                border-radius: 8px;
-                                            ">
-                                                Click to view your message
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <!-- Button -->
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 30px auto;">
+                                <tr>
+                                    <td align="center" style="border-radius: 8px; background-color: #a855f7;">
+                                        <a href="https://vybrix.app/receive" style="
+                                            display: inline-block;
+                                            color: #000000;
+                                            text-decoration: none;
+                                            padding: 16px 40px;
+                                            font-size: 18px;
+                                            font-weight: 600;
+                                        ">
+                                            Click to view your message
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
 
-                                <!-- Stars bottom -->
-                                <div style="position: relative; padding: 20px 0;">
-                                    <p style="color: rgba(255,255,255,0.3); font-size: 12px; margin: 0;">⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐</p>
-                                </div>
+                            <!-- Stars -->
+                            <p style="color: rgba(255,255,255,0.4); font-size: 16px; margin: 30px 0 20px 0;">⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐</p>
 
-                                <!-- Footer -->
-                                <p style="
-                                    margin: 30px 0 0 0;
-                                    color: #ffffff;
-                                    font-size: 14px;
-                                    opacity: 0.7;
-                                ">
-                                    Vybrix - Cosmic connections, one message at a time
-                                </p>
+                            <!-- Footer -->
+                            <p style="
+                                margin: 20px 0 0 0;
+                                color: #ffffff;
+                                font-size: 14px;
+                                opacity: 0.7;
+                            ">
+                                Vybrix - Cosmic connections, one message at a time
+                            </p>
 
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
       `,
