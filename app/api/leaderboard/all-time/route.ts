@@ -8,34 +8,38 @@ const supabase = createClient(
 
 export async function GET() {
   try {
-    // Get top 5 all-time high scores with messages
+    // Get all scores with messages
     const { data, error } = await supabase
       .from('scores')
       .select('token, score, message, created_at')
       .order('score', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(100);
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
 
-    // Group by token and get highest score for each
+    // Group by token and keep the highest score entry (with its message)
     const tokenMap = new Map<string, any>();
     
-    data?.forEach((score) => {
-      const existing = tokenMap.get(score.token);
-      if (!existing || score.score > existing.score) {
-        tokenMap.set(score.token, {
-          token: score.token,
-          highScore: score.score,
-          message: score.message,
-          date: score.created_at
+    data?.forEach((scoreEntry) => {
+      const existing = tokenMap.get(scoreEntry.token);
+      if (!existing || scoreEntry.score > existing.score) {
+        tokenMap.set(scoreEntry.token, {
+          token: scoreEntry.token,
+          highScore: scoreEntry.score,
+          message: scoreEntry.message || null,
+          date: scoreEntry.created_at
         });
       }
     });
 
-    // Convert to array and get top 5
+    // Convert to array, sort by score, get top 5
     const leaderboard = Array.from(tokenMap.values())
-      .sort((a, b) => b.highScore - a.highScore)
+      .sort((a, b) => {
+        if (b.highScore !== a.highScore) {
+          return b.highScore - a.highScore;
+        }
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      })
       .slice(0, 5);
 
     return NextResponse.json({
@@ -44,9 +48,9 @@ export async function GET() {
       count: leaderboard.length
     });
   } catch (error) {
-    console.error('Leaderboard error:', error);
+    console.error('All-time leaderboard error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch leaderboard' },
+      { error: 'Failed to fetch all-time leaderboard' },
       { status: 500 }
     );
   }
