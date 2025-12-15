@@ -8,61 +8,45 @@ const supabase = createClient(
 
 export async function GET() {
   try {
-    const { data, error } = await supabase.rpc('get_all_time_leaderboard');
+    // Get top 5 all-time high scores with messages
+    const { data, error } = await supabase
+      .from('scores')
+      .select('token, score, message, created_at')
+      .order('score', { ascending: false })
+      .order('created_at', { ascending: true })
+      .limit(100);
 
-    if (error) {
-      console.error('All-time leaderboard RPC error:', error);
-      
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('scores')
-        .select('token, score, created_at')
-        .order('score', { ascending: false })
-        .limit(1000);
+    if (error) throw error;
 
-      if (fallbackError) throw fallbackError;
+    // Group by token and get highest score for each
+    const tokenMap = new Map<string, any>();
+    
+    data?.forEach((score) => {
+      const existing = tokenMap.get(score.token);
+      if (!existing || score.score > existing.score) {
+        tokenMap.set(score.token, {
+          token: score.token,
+          highScore: score.score,
+          message: score.message,
+          date: score.created_at
+        });
+      }
+    });
 
-      const grouped = new Map();
-      fallbackData?.forEach((entry: any) => {
-        if (!grouped.has(entry.token) || entry.score > grouped.get(entry.token).score) {
-          grouped.set(entry.token, {
-            token: entry.token,
-            highScore: entry.score,
-            date: entry.created_at,
-          });
-        }
-      });
-
-      const leaderboard = Array.from(grouped.values())
-        .sort((a, b) => b.highScore - a.highScore)
-        .slice(0, 50);
-
-      return NextResponse.json({
-        success: true,
-        leaderboard,
-        count: leaderboard.length,
-      });
-    }
-
-    const leaderboard = (data || []).map((entry: any) => ({
-      token: entry.token,
-      highScore: entry.high_score,
-      date: entry.date,
-    }));
+    // Convert to array and get top 5
+    const leaderboard = Array.from(tokenMap.values())
+      .sort((a, b) => b.highScore - a.highScore)
+      .slice(0, 5);
 
     return NextResponse.json({
       success: true,
       leaderboard,
-      count: leaderboard.length,
+      count: leaderboard.length
     });
-
   } catch (error) {
-    console.error('Error fetching all-time leaderboard:', error);
+    console.error('Leaderboard error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Failed to fetch all-time leaderboard',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to fetch leaderboard' },
       { status: 500 }
     );
   }
