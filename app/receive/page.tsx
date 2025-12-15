@@ -995,7 +995,6 @@ export default function ReceivePage() {
                 left: '15%',
                 top: `${ufoY}%`,
                 transform: 'translate(-50%, -50%)',
-                transition: 'none'
               }}
             >
               <svg width="80" height="48" viewBox="0 0 140 80" className="md:w-[100px] md:h-[60px]">
