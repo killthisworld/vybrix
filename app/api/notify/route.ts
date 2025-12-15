@@ -24,74 +24,45 @@ export async function POST(request: Request) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light only">
+    <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000000 !important;
-        }
-        /* Force dark mode email clients to keep black background */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #000000 !important;
-            }
-            .email-container {
-                background-color: #000000 !important;
-            }
-        }
-        /* Gmail dark mode override */
-        u + .body .email-container {
-            background-color: #000000 !important;
-        }
-    </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;" class="body">
-    <div style="background-color: #000000; margin: 0; padding: 0;" class="email-container">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #000000 !important; margin: 0; padding: 0;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+    <div style="background: #000000;">
+        <!-- Use a table as main container - better dark mode support -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#000000">
             <tr>
-                <td align="center" style="padding: 60px 20px; background-color: #000000 !important;">
+                <td align="center" style="padding: 60px 20px;" bgcolor="#000000">
                     
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #000000 !important; position: relative;">
+                    <!-- Inner content table -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px;" bgcolor="#000000">
                         <tr>
-                            <td style="
-                                text-align: center; 
-                                padding: 40px 20px;
-                                background-color: #000000 !important;
-                                background-image: 
-                                    radial-gradient(2px 2px at 20% 30%, white, transparent),
-                                    radial-gradient(2px 2px at 60% 70%, white, transparent),
-                                    radial-gradient(1px 1px at 50% 50%, white, transparent),
-                                    radial-gradient(1px 1px at 80% 10%, white, transparent),
-                                    radial-gradient(2px 2px at 90% 60%, white, transparent),
-                                    radial-gradient(1px 1px at 33% 80%, white, transparent),
-                                    radial-gradient(2px 2px at 15% 15%, white, transparent),
-                                    radial-gradient(1px 1px at 70% 40%, white, transparent),
-                                    radial-gradient(2px 2px at 25% 90%, white, transparent),
-                                    radial-gradient(1px 1px at 95% 85%, white, transparent);
-                                background-size: 100% 100%;
-                            ">
+                            <td align="center" style="padding: 40px 20px;" bgcolor="#000000">
                                 
+                                <!-- Stars as text/emojis instead of CSS gradients -->
+                                <div style="position: relative; padding: 20px 0;">
+                                    <p style="color: rgba(255,255,255,0.3); font-size: 12px; margin: 0;">✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨</p>
+                                </div>
+                                
+                                <!-- Title -->
                                 <h1 style="
-                                    margin: 0 0 50px 0;
-                                    font-size: 32px;
+                                    margin: 30px 0;
+                                    font-size: 28px;
                                     font-weight: bold;
-                                    color: #a855f7 !important;
+                                    color: #a855f7;
                                     line-height: 1.4;
                                 ">
                                     🌟 Your message has found its match! 🌟
                                 </h1>
 
-                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto;">
+                                <!-- Button -->
+                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 30px auto;">
                                     <tr>
-                                        <td style="
-                                            border-radius: 8px;
-                                            background-color: #a855f7 !important;
-                                        ">
+                                        <td align="center" style="border-radius: 8px;" bgcolor="#a855f7">
                                             <a href="https://vybrix.app/receive" style="
-                                                display: block;
-                                                color: #000000 !important;
+                                                display: inline-block;
+                                                color: #000000;
+                                                background-color: #a855f7;
                                                 text-decoration: none;
                                                 padding: 16px 40px;
                                                 font-size: 18px;
@@ -104,9 +75,15 @@ export async function POST(request: Request) {
                                     </tr>
                                 </table>
 
+                                <!-- Stars bottom -->
+                                <div style="position: relative; padding: 20px 0;">
+                                    <p style="color: rgba(255,255,255,0.3); font-size: 12px; margin: 0;">⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐ ✨ ⭐</p>
+                                </div>
+
+                                <!-- Footer -->
                                 <p style="
-                                    margin: 50px 0 0 0;
-                                    color: #ffffff !important;
+                                    margin: 30px 0 0 0;
+                                    color: #ffffff;
                                     font-size: 14px;
                                     opacity: 0.7;
                                 ">
