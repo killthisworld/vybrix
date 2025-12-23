@@ -1,140 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+);
 
 interface SendRequest {
-  content: string;
+  message?: string;
+  content?: string;
   email?: string;
   token?: string;
-}
-
-async function analyzeMessage(content: string) {
-  try {
-    const sentimentScore = content.length > 50 ? 0.5 : -0.2;
-    const embedding = Array(1536).fill(Math.random());
-
-    return {
-      embedding,
-      sentiment_score: sentimentScore,
-      emotion_map: { joy: 0.3, sadness: 0.2, anger: 0.1, calm: 0.4 },
-      intent: 'sharing',
-      energy_scalar: 0.6,
-      topic_tags: ['general'],
-      polarity_yin_yang: sentimentScore,
-      lexical_depth: Math.min(1, content.length / 500),
-    };
-  } catch (error) {
-    console.error('Analysis error:', error);
-    return null;
-  }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: SendRequest = await request.json();
-    const { content, email, token } = body;
-
-    if (!content || content.trim().length === 0) {
+    
+    // Accept both 'message' and 'content' field names
+    const messageContent = body.message || body.content;
+    
+    if (!messageContent || !messageContent.trim()) {
       return NextResponse.json(
-        { error: 'Message content is required' },
+        { error: 'Message is required' },
         { status: 400 }
       );
     }
 
-    let userId: string;
-    let userToken = token;
+    const token = body.token || uuidv4();
 
-    if (token) {
-      const userResult = await pool.query(
-        'SELECT id FROM users WHERE anon_token = $1',
-        [token]
-      );
-      if (userResult.rows.length === 0) {
-        return NextResponse.json(
-          { error: 'Invalid token' },
-          { status: 401 }
-        );
-      }
-      userId = userResult.rows[0].id;
-    } else {
-      userToken = uuidv4();
-      const createUserResult = await pool.query(
-        'INSERT INTO users (anon_token) VALUES ($1) RETURNING id',
-        [userToken]
-      );
-      userId = createUserResult.rows[0].id;
-    }
-
+    // Check if user already sent today
     const today = new Date().toISOString().split('T')[0];
-    const sentToday = await pool.query(
-      'SELECT COUNT(*) FROM messages WHERE user_id = $1 AND pool_day = $2',
-      [userId, today]
-    );
+    const { data: existing } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('token', token)
+      .gte('created_at', `${today}T00:00:00`)
+      .single();
 
-    if (parseInt(sentToday.rows[0].count) > 0) {
+    if (existing) {
       return NextResponse.json(
         { error: 'You can only send one message per day' },
         { status: 429 }
       );
     }
 
-    const analysis = await analyzeMessage(content);
-    if (!analysis) {
-      return NextResponse.json(
-        { error: 'Failed to analyze message' },
-        { status: 500 }
-      );
-    }
+    // Insert message
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([
+        {
+          token,
+          message: messageContent.trim(),
+          status: 'pending',
+        },
+      ])
+      .select()
+      .single();
 
-    const createdAt = new Date();
-    const minDeliveryTime = new Date(createdAt.getTime() + 60 * 60 * 1000);
-    const maxDeliveryTime = new Date(createdAt.getTime() + 10 * 60 * 60 * 1000);
-
-    const messageResult = await pool.query(
-      `INSERT INTO messages 
-       (user_id, content, user_email, pool_day, min_deliver_time, max_deliver_time, analysis_done)
-       VALUES ($1, $2, $3, $4, $5, $6, TRUE)
-       RETURNING id`,
-      [userId, content, email || null, today, minDeliveryTime, maxDeliveryTime]
-    );
-
-    const messageId = messageResult.rows[0].id;
-
-    await pool.query(
-      `INSERT INTO message_vibes
-       (message_id, embedding, sentiment_score, emotion_map, intent, 
-        polarity_yin_yang, lexical_depth, topic_tags, energy_scalar)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [
-        messageId,
-        JSON.stringify(analysis.embedding),
-        analysis.sentiment_score,
-        JSON.stringify(analysis.emotion_map),
-        analysis.intent,
-        analysis.polarity_yin_yang,
-        analysis.lexical_depth,
-        analysis.topic_tags,
-        analysis.energy_scalar,
-      ]
-    );
+    if (error) throw error;
 
     return NextResponse.json({
       success: true,
-      token: userToken,
-      messageId,
-      message: 'Message sent!',
+      token,
+      message: 'Message sent successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Send error:', error);
     return NextResponse.json(
-      { error: 'Failed to send message: ' + String(error) },
+      { error: error.message || 'Failed to send message' },
       { status: 500 }
     );
   }
 }
-// Add this at the end of the successful send response:
-// The response already exists, we just need the frontend to save the date
