@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
+const getSupabase = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_KEY || 'placeholder'
 );
 
 interface SendRequest {
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already sent today
     const today = new Date().toISOString().split('T')[0];
+    const supabase = getSupabase();
     const { data: existing } = await supabase
       .from('messages')
       .select('*')
@@ -74,3 +75,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+export const dynamic = 'force-dynamic';

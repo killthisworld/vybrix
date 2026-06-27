@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => new Resend(process.env.RESEND_API_KEY || 'placeholder');
 
 export async function sendMatchNotification(
   email: string,
@@ -10,6 +10,7 @@ export async function sendMatchNotification(
   try {
     const appUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vybrix.app';
     
+    const resend = getResend();
     await resend.emails.send({
       from: 'VYBRIX <hello@vybrix.app>',
       replyTo: 'vybrix.help@gmail.com',  // ← NEW: People can reply here!
@@ -222,6 +223,7 @@ export async function sendMatchNotification(
 
 export async function sendResonanceFeedback(email: string) {
   try {
+    const resend = getResend();
     await resend.emails.send({
       from: 'VYBRIX <hello@vybrix.app>',
       replyTo: 'vybrix.help@gmail.com',  // ← NEW: People can reply here!

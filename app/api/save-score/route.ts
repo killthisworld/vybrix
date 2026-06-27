@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
+const getSupabase = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_KEY || 'placeholder'
 );
 
 export async function POST(request: Request) {
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     const endOfDay = new Date(now);
     endOfDay.setUTCHours(23, 59, 59, 999);
 
+    const supabase = getSupabase();
     const { data: existingScores } = await supabase
       .from('scores')
       .select('score, id')
@@ -118,3 +119,4 @@ export async function POST(request: Request) {
     );
   }
 }
+export const dynamic = 'force-dynamic';

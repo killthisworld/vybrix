@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
 import { sendMatchNotification } from '@/lib/email';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const getPool = () => new Pool({ connectionString: process.env.DATABASE_URL });
 
 const SECOND_BEST_THRESHOLD = 0.75;
 const MINIMUM_ACCEPTABLE_SCORE = 0.55;
@@ -49,6 +47,7 @@ export async function GET(request: NextRequest) {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
 
+    const pool = getPool();
     const result = await pool.query(
       `SELECT m.id, m.user_id, m.content, m.user_email,
               mv.sentiment_score, mv.emotion_map, mv.intent, mv.energy_scalar
